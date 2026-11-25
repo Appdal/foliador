@@ -33,11 +33,13 @@ button{cursor:pointer}
 .brand small{display:block;font-size:13px;color:#cfe9fb;font-weight:400}
 .tabs{display:flex;gap:4px;flex-wrap:wrap}
 .tabs button{border:0;background:none;padding:10px 14px;min-height:44px;border-radius:8px;font-weight:500;color:#dbeefc}
-.tabs button[aria-selected=true]{background:#fff;color:var(--blue);font-weight:700}
+.tabs button[aria-current=page]{background:#fff;color:var(--blue);font-weight:700}
 .tabs button:focus-visible{outline-color:var(--cel)}
 .view{padding:clamp(14px,2.5vw,28px) max(4vw,14px) 40px;max-width:1400px;margin:0 auto}
-.work{display:grid;grid-template-columns:minmax(0,1fr) 380px;gap:24px;align-items:start}
-@media(max-width:900px){.work{grid-template-columns:minmax(0,1fr)}}
+.work{display:grid;grid-template-columns:380px minmax(0,1fr);grid-template-areas:"controls preview";gap:24px;align-items:start}
+.work>aside{grid-area:controls}
+.work>.stage{grid-area:preview}
+@media(max-width:900px){.work{grid-template-columns:minmax(0,1fr);grid-template-areas:"preview" "controls"}}
 .stage{background:var(--panel);border:1px solid var(--line);border-radius:14px;overflow:hidden}
 @media(min-width:901px){.stage{position:sticky;top:14px}}
 .drop{display:grid;place-items:center;text-align:center;gap:14px;padding:48px 20px;min-height:420px;border:2px dashed var(--line);border-radius:12px;margin:14px;transition:background .15s}
@@ -70,6 +72,9 @@ button{cursor:pointer}
 .th[aria-current=true] .sheet{outline:3px solid var(--acc)}
 .pnote{display:flex;flex-wrap:wrap;align-items:center;gap:8px 14px;padding:10px 14px;font-size:14px;color:var(--mut);border-top:1px solid var(--line);min-height:56px}
 .pnote b{color:var(--ink)}
+.pnote .stamp-links{display:flex;flex-wrap:wrap;gap:6px;width:100%}
+.stamp-links .btn{max-width:100%;white-space:normal;overflow-wrap:anywhere}
+.stamp-links .btn[aria-pressed=true],#fitWidth[aria-pressed=true]{border-color:#0d47a1;color:#0d47a1;background:var(--soft)}
 .warn{color:light-dark(#c62828,#ff8a80);font-weight:700}
 .panel{display:grid;gap:14px}
 .card{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:16px}
@@ -99,6 +104,17 @@ input[type=number],input[type=text],select{width:100%;min-height:44px;padding:8p
 .tool{max-width:760px;margin:0 auto;display:grid;gap:16px}
 .tool h2{font-size:32px;line-height:1.05;margin:4px 0 0;text-wrap:balance}
 .tool>p{margin:0;color:var(--mut)}
+.hub{display:grid;gap:24px}
+.hub h2,.hub h3{margin:0 0 10px}
+.hub h3{scroll-margin-top:100px}
+.toolLinks{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,210px),1fr));gap:12px}
+.toolLinks button{text-align:left;display:grid;gap:5px;min-height:84px;color:var(--blue)}
+.toolLinks small{color:var(--mut);font-weight:400;white-space:normal}
+.pagePicker{display:grid;grid-template-columns:repeat(auto-fill,minmax(100px,1fr));gap:8px;max-height:360px;overflow:auto;padding:3px}
+.pagePicker button{background:var(--soft);border:1px solid var(--line);border-radius:8px;min-width:0;min-height:130px;display:grid;justify-items:center;align-content:center;gap:6px;padding:5px}
+.pagePicker button[aria-pressed=true]{border-color:var(--blue);box-shadow:inset 0 0 0 1px var(--blue);color:var(--blue);font-weight:700}
+.pagePicker canvas{max-width:100%;max-height:100px;object-fit:contain}
+
 .flist{list-style:none;margin:0;padding:0;display:grid;gap:8px}
 .flist li{display:flex;align-items:center;gap:8px;background:var(--soft);border-radius:10px;padding:8px 10px}
 .flist li span{flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
@@ -174,16 +190,38 @@ input.inl{width:82px;min-height:40px}
     <svg width="40" height="40" viewBox="0 0 64 64" aria-hidden="true"><rect width="64" height="64" rx="14" fill="#fff"/><rect x="4" y="4" width="56" height="56" rx="11" fill="#0d47a1"/><text x="32" y="41" text-anchor="middle" font-family="Arial Black, Arial, sans-serif" font-weight="900" font-size="27" fill="#fff" letter-spacing="-1">NA</text><rect x="14" y="47" width="36" height="5" rx="2.5" fill="#29b6f6"/></svg>
     <div><h1>Foliador</h1><small>por Nara Alkatara · gratis e ilimitado</small></div>
   </div>
-  <nav class="tabs" role="tablist">
-    <button role="tab" data-v="foliar" aria-selected="true">Foliar y sellar</button>
-    <button role="tab" data-v="unir" aria-selected="false">Unir</button>
-    <button role="tab" data-v="extraer" aria-selected="false">Extraer y dividir</button>
-    <button role="tab" data-v="girar" aria-selected="false">Girar</button>
+  <nav class="tabs" aria-label="Herramientas">
+    <button type="button" data-v="inicio" aria-current="page">Inicio</button>
+    <button type="button" data-v="inicio" data-section="folioTools">Foliar y sellar</button>
+    <button type="button" data-v="inicio" data-section="organizeTools">Organizar PDF</button>
   </nav>
 </header>
 
 <main>
-<section class="view" id="v-foliar">
+<section class="view hub" id="v-inicio">
+  <div><h2>Herramientas PDF</h2><p>Elige qué quieres hacer con tus archivos.</p></div>
+  <div>
+    <h3 id="folioTools" tabindex="-1">Foliar y sellar</h3>
+    <div class="toolLinks">
+      <button class="btn" data-v="foliar">Foliar PDF<small>Numera todas las hojas o solo las de un rango.</small></button>
+      <button class="btn" data-v="sellar">Sellar PDF<small>Aplica los sellos de tu biblioteca.</small></button>
+      <button class="btn" data-v="combinar">Foliar y sellar PDF<small>Aplica folios y sellos en una sola descarga.</small></button>
+    </div>
+  </div>
+  <div>
+    <h3 id="organizeTools" tabindex="-1">Organizar PDF</h3>
+    <div class="toolLinks">
+      <button class="btn" data-v="unir">Unir PDF<small>Ordena varios archivos y combínalos en uno.</small></button>
+      <button class="btn" data-v="extraer">Extraer páginas<small>Guarda las hojas elegidas en un solo PDF.</small></button>
+      <button class="btn" data-v="dividir">Dividir PDF<small>Separa el archivo en partes.</small></button>
+      <button class="btn" data-v="girar">Rotar hojas<small>Corrige la orientación de páginas específicas.</small></button>
+      <button class="btn" data-v="girar-todo">Rotar todo el PDF<small>Gira todas las hojas a la vez.</small></button>
+    </div>
+  </div>
+</section>
+
+<section class="view" id="v-foliar" hidden>
+  <h2 id="editorTitle" tabindex="-1">Foliar y sellar PDF</h2>
   <div class="work">
     <div class="stage">
       <div class="drop" id="drop">
@@ -202,7 +240,7 @@ input.inl{width:82px;min-height:40px}
       </div>
       <div id="viewer" hidden>
         <div class="vbar">
-          <div class="fn"><span id="fname"></span><small id="finfo"></small></div>
+          <div class="fn">Vista previa<small><span id="fname"></span> · <span id="finfo"></span></small></div>
           <div class="seg" id="modeSeg"><button data-m="one" aria-pressed="true">Una hoja</button><button data-m="all" aria-pressed="false">Todas</button></div>
           <div class="nav" id="navOne">
             <button class="ib" id="prev" aria-label="Hoja anterior">‹</button>
@@ -211,6 +249,7 @@ input.inl{width:82px;min-height:40px}
             <button class="ib" id="zo" aria-label="Alejar">−</button>
             <button class="ib" id="zi" aria-label="Acercar">+</button>
           </div>
+          <button class="btn sm" id="fitWidth" aria-pressed="false">Ajustar al ancho</button>
           <span class="btn sm filebtn">Cambiar PDF<input type="file" id="fin2" accept="application/pdf,.pdf"></span>
         </div>
         <div class="cw" id="cw"><div class="sheet" id="sheet"><canvas id="pc"></canvas><canvas id="oc"></canvas></div></div>
@@ -221,8 +260,8 @@ input.inl{width:82px;min-height:40px}
     </div>
 
     <aside class="panel">
-      <div class="card">
-        <label class="toggle"><input type="checkbox" data-k="fol"> Foliar</label>
+      <div class="card" id="folioCard">
+        <label class="toggle" id="folioSwitch"><input type="checkbox" data-k="fol"> Foliar</label>
         <div id="folBox">
           <div class="row" style="margin-top:6px">
             <label class="f">Desde la hoja N.°<input type="number" min="1" data-k="a"></label>
@@ -253,14 +292,14 @@ input.inl{width:82px;min-height:40px}
         </div>
       </div>
 
-      <div class="card">
+      <div class="card" id="stampLibrary">
         <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap"><h3 style="margin:0;flex:1">Biblioteca de sellos</h3><button class="btn sm main" id="newSt">+ Nuevo sello</button></div>
         <p class="hint">Marca los sellos que van en cada hoja. El orden en que los marcas es el orden en que se colocan.</p>
         <ul class="lib" id="lib"></ul>
         <p class="hint">Los sellos quedan guardados en este navegador.</p>
       </div>
 
-      <div class="card">
+      <div class="card" id="sealCard">
         <h3>Sellado</h3>
         <div class="tabs2" data-seg="sm"><button data-val="din">Dinámico<small>busca el espacio libre</small></button><button data-val="est">Estático<small>posición fija</small></button></div>
         <div class="lbl">Hojas a sellar</div>
@@ -303,6 +342,7 @@ input.inl{width:82px;min-height:40px}
     <div class="card" style="display:grid;gap:12px">
       <span class="btn filebtn" style="justify-self:start">Agregar PDF<input type="file" id="uIn" accept="application/pdf,.pdf" multiple></span>
       <ul class="flist" id="uList"></ul>
+      <label class="f">Nombre del PDF<input type="text" id="uName" placeholder="unido.pdf"></label>
       <button class="btn main" id="uGo" disabled>Unir y descargar</button>
       <div class="status" id="uSt" aria-live="polite"></div>
     </div>
@@ -311,17 +351,22 @@ input.inl{width:82px;min-height:40px}
 
 <section class="view" id="v-extraer" hidden>
   <div class="tool">
-    <h2>Extraer o dividir hojas</h2>
+    <h2 id="extractTitle" tabindex="-1">Extraer páginas</h2>
     <p>Escribe las hojas separadas por comas, por ejemplo <b>1-3, 5, 8-10</b>.</p>
     <div class="card" style="display:grid;gap:12px">
       <span class="btn filebtn" style="justify-self:start">Elegir PDF<input type="file" id="eIn" accept="application/pdf,.pdf"></span>
       <div class="status" id="eInfo"></div>
       <label class="f">Hojas<input type="text" id="eR" placeholder="1-3, 5, 8-10"></label>
+      <div id="splitOptions" class="seg" hidden>
+        <button data-parts="2">En 2 mitades</button><button data-parts="3">En 3 partes</button><button data-parts="0">Página a página</button>
+      </div>
+      <p class="hint" id="ePreviewHint"></p>
+      <div id="ePages" class="pagePicker" aria-label="Hojas del PDF"></div>
       <div style="display:flex;gap:10px;flex-wrap:wrap">
         <button class="btn main" id="eOne" disabled>Extraer en un solo PDF</button>
-        <button class="btn" id="eSplit" disabled>Dividir: un PDF por grupo (ZIP)</button>
+        <button class="btn main" id="eSplit" disabled>Dividir y descargar</button>
       </div>
-      <p class="hint">Para dividir hoja por hoja, deja la casilla vacía y usa «Dividir».</p>
+      <p class="hint" id="eSummary" aria-live="polite"></p>
       <div class="status" id="eSt" aria-live="polite"></div>
     </div>
   </div>
@@ -329,13 +374,15 @@ input.inl{width:82px;min-height:40px}
 
 <section class="view" id="v-girar" hidden>
   <div class="tool">
-    <h2>Girar hojas</h2>
+    <h2 id="rotateTitle" tabindex="-1">Rotar hojas</h2>
     <p>Útil para planos escaneados de costado.</p>
     <div class="card" style="display:grid;gap:12px">
       <span class="btn filebtn" style="justify-self:start">Elegir PDF<input type="file" id="gIn" accept="application/pdf,.pdf"></span>
       <div class="status" id="gInfo"></div>
-      <label class="f">Hojas (vacío = todas)<input type="text" id="gR" placeholder="2, 7-9"></label>
+      <label class="f" id="gRange">Hojas<input type="text" id="gR" placeholder="2, 7-9"></label>
       <div class="seg" id="gSeg"><button data-g="90" aria-pressed="true">90° derecha</button><button data-g="180" aria-pressed="false">180°</button><button data-g="270" aria-pressed="false">90° izquierda</button></div>
+      <div class="row"><span id="gAngle" aria-live="polite"></span><button class="btn sm" id="gReset" disabled>Restablecer giros</button></div>
+      <div id="gPages" class="pagePicker" aria-label="Vista previa de la rotación"></div>
       <button class="btn main" id="gGo" disabled>Girar y descargar</button>
       <div class="status" id="gSt" aria-live="polite"></div>
     </div>
@@ -418,7 +465,7 @@ let stamps=[],use=[];
 try{const d=JSON.parse(localStorage.getItem('na.sellos')||'null');if(d){stamps=d.stamps||[];use=d.use||[]}}catch(e){}
 if(!stamps.length&&!localStorage.getItem('na.sellos.v')){const s=newStamp('firma');s.ref='Ejemplo: supervisión';s.ent.t='SUPERVISIÓN DE OBRA';s.nom.t='NOMBRE APELLIDO APELLIDO';s.cip.t='00000';s.car.t='JEFE DE SUPERVISIÓN DE OBRA';stamps.push(s);use=[s.id]}
 
-let src=null,fname='',doc=null,pages=[],cur=0,mode='one',zoom=1,inkMap=[],inkJobs=[],manual={},renderTask=null,kc=1,flagged=null;
+let src=null,fname='',doc=null,pages=[],cur=0,mode='one',zoom=1,fitWidth=false,activeStamp=null,inkMap=[],inkJobs=[],manual={},renderTask=null,kc=1,flagged=null;
 
 function newStamp(forma){const p=PRESET[forma],F=k=>({t:'',font:'Arial',pt:p[k][0],b:!!p[k][1]});
   return {id:'s'+Date.now().toString(36)+Math.random().toString(36).slice(2,6),ref:'',modo:'texto',forma,w:p.w,h:p.h,color:p.color,cipPre:'CIP N.°',bg:true,rotImg:0,firma:null,img:null,ent:F('ent'),nom:F('nom'),car:F('car'),cip:F('cip'),est:{cor:'br',mh:15,mv:25},ver:1}}
@@ -432,7 +479,42 @@ $('#dlgOk').onclick=()=>{$('#dlg').hidden=true;dlgRes&&dlgRes(true)};$('#dlgNo')
 if(!libsOk) setTimeout(()=>dialog('No cargaron las herramientas','Revisa tu conexión a internet y vuelve a abrir la página.'),300);
 
 /* ---------- pestañas ---------- */
-for(const b of $$('.tabs button')) b.onclick=()=>{for(const x of $$('.tabs button')) x.setAttribute('aria-selected',x===b);for(const v of $$('.view')) v.hidden=v.id!=='v-'+b.dataset.v};
+let editorTool='combinar', splitTool=false, rotateWhole=false;
+const foliating=()=>editorTool==='foliar'||(editorTool==='combinar'&&cfg.fol);
+const sealing=()=>editorTool!=='foliar';
+for(const button of $$('[data-v]')) button.onclick=()=>{
+  const tool=button.dataset.v;
+  const editor=['foliar','sellar','combinar'].includes(tool);
+  const extract=['extraer','dividir'].includes(tool),rotate=['girar','girar-todo'].includes(tool);
+  const view=editor?'foliar':extract?'extraer':rotate?'girar':tool;
+  for(const tab of $$('.tabs button'))tab.removeAttribute('aria-current');
+  const tab=button.closest('.tabs')?button:$('[data-section="'+(editor?'folioTools':'organizeTools')+'"]');
+  tab.setAttribute('aria-current','page');
+  for(const section of $$('.view'))section.hidden=section.id!=='v-'+view;
+  if(editor){
+    editorTool=tool;
+    $('#editorTitle').textContent={foliar:'Foliar PDF',sellar:'Sellar PDF',combinar:'Foliar y sellar PDF'}[tool];
+    $('#folioCard').hidden=tool==='sellar';$('#folioSwitch').hidden=tool!=='combinar';
+    $('#stampLibrary').hidden=$('#sealCard').hidden=!sealing();
+    syncInputs();flagged=null;showReview();updateHint();if(doc)setMode(mode);
+  }
+  if(extract){
+    splitTool=tool==='dividir';
+    $('#extractTitle').textContent=splitTool?'Dividir PDF':'Extraer páginas';
+    $('#splitOptions').hidden=$('#eSplit').hidden=!splitTool;$('#eOne').hidden=splitTool;
+    $('#ePreviewHint').textContent=splitTool?'Toca una miniatura para cortar después de esa hoja.':'Toca las miniaturas para marcar las hojas que quieres extraer.';
+    $('#eR').value='';cuts.clear();updateExtract();
+  }
+  if(rotate){
+    const whole=tool==='girar-todo';
+    if(whole!==rotateWhole){rotations.clear();$('#gR').value='';lastPage=null}
+    rotateWhole=whole;
+    $('#rotateTitle').textContent=rotateWhole?'Rotar todo el PDF':'Rotar hojas';
+    $('#gRange').hidden=rotateWhole;updateRotation();
+  }
+  const heading=button.dataset.section?document.getElementById(button.dataset.section):$('#v-'+view+' h2');
+  heading?.scrollIntoView({block:'start'});heading?.focus({preventScroll:true});
+};
 
 /* ---------- controles del panel ---------- */
 const NUM=new Set(['a','b','ini','dig','mh','mv','fs','sD','sH','frMm','bMm']);
@@ -440,7 +522,7 @@ function syncInputs(){
   for(const el of $$('[data-k]')){const k=el.dataset.k;if(el.type==='checkbox')el.checked=!!cfg[k];else el.value=cfg[k]}
   for(const s of $$('[data-seg]'))for(const b of s.querySelectorAll('button'))b.setAttribute('aria-pressed',String(cfg[s.dataset.seg])===b.dataset.val);
   for(const r of $$('input[name=hs]'))r.checked=r.value===cfg.hs;
-  $('#folBox').hidden=!cfg.fol;$('#dinBox').hidden=cfg.sm!=='din';$('#estBox').hidden=cfg.sm!=='est';$('#analyze').hidden=cfg.sm!=='din';
+  $('#folBox').hidden=!foliating();$('#dinBox').hidden=cfg.sm!=='din';$('#estBox').hidden=cfg.sm!=='est';$('#analyze').hidden=!sealing()||cfg.sm!=='din';
   $('#ordHint').textContent=cfg.ord==='asc'?'La última hoja recibe el folio inicial y la numeración sube hacia la primera.':'La primera hoja recibe el folio inicial y la numeración sube hacia la última.';
 }
 for(const el of $$('[data-k]'))el.addEventListener('input',()=>{const k=el.dataset.k;let v=el.type==='checkbox'?el.checked:el.value;if(NUM.has(k)){v=parseFloat(v);if(!isFinite(v))return}cfg[k]=v;
@@ -454,13 +536,15 @@ function changed(k){
 function clampRange(){const n=pages.length;cfg.a=Math.min(Math.max(1,Math.round(cfg.a)||1),n);cfg.b=Math.min(Math.max(1,Math.round(cfg.b)||n),n);cfg.dig=Math.min(10,Math.max(1,Math.round(cfg.dig)||1))}
 function updateHint(){
   if(!pages.length)return;const lo=Math.min(cfg.a,cfg.b),hi=Math.max(cfg.a,cfg.b),cnt=hi-lo+1;
-  $('#rangeHint').textContent=`El PDF tiene ${pages.length} hojas. Se foliarán ${cnt} (de la ${lo} a la ${hi}), con folios del ${fmt(cfg.ini)} al ${fmt(cfg.ini+cnt-1)}.`;
+  $('#rangeHint').textContent=`El PDF tiene ${pages.length} hojas. Se foliarán ${cnt} (de la ${lo} a la ${hi}).`;
+  const first=foliating()?`Hoja ${lo} → ${fmt(folioNum(lo-1))}`:null;
+  $('#ordHint').textContent=!first?'':lo===hi?first:`${first} · Hoja ${hi} → ${fmt(folioNum(hi-1))}`;
   const e=sealSet();$('#hsErr').hidden=!e.err;$('#hsErr').textContent=e.err||'';
 }
 
 /* ---------- folio ---------- */
 const fmt=n=>cfg.pre+String(n).padStart(cfg.dig,'0');
-function folioNum(i){if(!cfg.fol)return null;const p=i+1,lo=Math.min(cfg.a,cfg.b),hi=Math.max(cfg.a,cfg.b);if(p<lo||p>hi)return null;return cfg.ord==='asc'?cfg.ini+(hi-p):cfg.ini+(p-lo)}
+function folioNum(i){if(!foliating())return null;const p=i+1,lo=Math.min(cfg.a,cfg.b),hi=Math.max(cfg.a,cfg.b);if(p<lo||p>hi)return null;return cfg.ord==='asc'?cfg.ini+(hi-p):cfg.ini+(p-lo)}
 const mctx=document.createElement('canvas').getContext('2d');
 function textW(t,size){mctx.font='700 100px Helvetica, Arial, sans-serif';return mctx.measureText(t).width*size/100}
 function folioBox(i,wFn){
@@ -632,7 +716,7 @@ function sealSet(){
   else if(cfg.hs==='esp'){try{const set=new Set();for(const [a,b] of parseRanges(cfg.sE||'',n||1e9))for(let p=a;p<=b;p++)set.add(p);v={set};if(!set.size)v.err='Escribe qué hojas quieres sellar.'}catch(e){v={set:new Set(),err:e.message}}}
   sealCache={k,v};return v;
 }
-function sealPage(i){if(!usedStamps().length)return false;const v=sealSet();if(v.all)return true;if(v.set)return v.set.has(i+1);return i+1>=v.lo&&i+1<=v.hi}
+function sealPage(i){if(!sealing()||!usedStamps().length)return false;const v=sealSet();if(v.all)return true;if(v.set)return v.set.has(i+1);return i+1>=v.lo&&i+1<=v.hi}
 
 /* ---------- búsqueda de espacio libre ---------- */
 const INKSC=0.25;
@@ -655,18 +739,45 @@ function placeAll(i){
   if(fb){const p=3;excl(fb.bb[0]/MM-p,fb.bb[1]/MM-p,(fb.bb[2]-fb.bb[0])/MM+2*p,(fb.bb[3]-fb.bb[1])/MM+2*p)}
   if(cfg.fr&&cfg.frMm>0)excl(0,0,cfg.frMm,Hm);
   const out=[],I=new Int32Array((W+1)*(H+1)),diag=Math.hypot(W,H);
+  const reserved=L.filter(st=>manual[i]?.[st.id]).map(st=>({s:st,...manual[i][st.id]}));
+  const reserve=p=>excl(p.x-2,p.y-2,p.s.w+4,p.s.h+4);
+  reserved.forEach(reserve);
   for(const st of L){
     const man=manual[i]&&manual[i][st.id];let r;
     if(man)r={s:st,x:man.x,y:man.y,f:0,man:true};
     else{
       for(let y=0;y<H;y++){let row=0;for(let x=0;x<W;x++){row+=m[y*W+x];I[(y+1)*(W+1)+x+1]=I[y*(W+1)+x+1]+row}}
       const sw=Math.min(W-1,Math.ceil(st.w*k)),sh=Math.min(H-1,Math.ceil(st.h*k)),bg=Math.round(Math.max(0,cfg.bMm)*k);
-      const x0=Math.min(bg,W-sw),y0=Math.min(bg,H-sh),x1=Math.max(x0,W-sw-bg),y1=Math.max(y0,H-sh-bg);
-      const tx=cfg.zona==='any'?null:(cfg.zona[1]==='r'?x1:x0),ty=cfg.zona==='any'?null:(cfg.zona[0]==='b'?y1:y0),A=sw*sh;let best=null;
-      for(let y=y0;y<=y1;y+=2)for(let x=x0;x<=x1;x+=2){const c=I[(y+sh)*(W+1)+x+sw]-I[y*(W+1)+x+sw]-I[(y+sh)*(W+1)+x]+I[y*(W+1)+x],f=c/A,sc=f+(tx===null?0:.05*Math.hypot(x-tx,y-ty)/diag);if(!best||sc<best.sc)best={sc,f,x,y}}
-      r={s:st,x:best.x/k,y:best.y/k,f:best.f};
+      const maxX=Math.min(W-sw,Math.floor(Math.max(0,Wm-st.w)*k));
+      const maxY=Math.min(H-sh,Math.floor(Math.max(0,Hm-st.h)*k));
+      const x0=Math.min(bg,maxX),y0=Math.min(bg,maxY),x1=Math.max(x0,maxX-bg),y1=Math.max(y0,maxY-bg);
+      const tx=cfg.zona==='any'?null:(cfg.zona[1]==='r'?x1:x0),ty=cfg.zona==='any'?null:(cfg.zona[0]==='b'?y1:y0),A=sw*sh;
+      const scan=(left,top,right,bottom,allowOverlap=false)=>{
+        let best=null;
+        for(let y=top;;y=Math.min(y+1,bottom)){
+          for(let x=left;;x=Math.min(x+1,right)){
+            const px=x/k,py=y/k;
+            let overlap=0;
+            for(const p of reserved){
+              const w=Math.min(px+st.w,p.x+p.s.w)-Math.max(px,p.x);
+              const h=Math.min(py+st.h,p.y+p.s.h)-Math.max(py,p.y);
+              if(w>0&&h>0)overlap+=w*h;
+            }
+            if(!overlap||allowOverlap){
+              const c=I[(y+sh)*(W+1)+x+sw]-I[y*(W+1)+x+sw]-I[(y+sh)*(W+1)+x]+I[y*(W+1)+x],f=c/A,sc=f+(tx===null?0:.05*Math.hypot(x-tx,y-ty)/diag);
+              if(!best||overlap<best.overlap||(overlap===best.overlap&&sc<best.sc))best={sc,f,x,y,overlap};
+            }
+            if(x===right)break;
+          }
+          if(y===bottom)break;
+        }
+        return best;
+      };
+      const best=scan(x0,y0,x1,y1)||scan(0,0,maxX,maxY,true);
+      r={s:st,x:best.x/k,y:best.y/k,f:best.overlap?1:best.f};
+      reserved.push(r);reserve(r);
     }
-    out.push(r);excl(r.x-2,r.y-2,st.w+4,st.h+4);
+    out.push(r);
   }
   if(pcache.size>3000)pcache.clear();pcache.set(key,out);return out;
 }
@@ -680,7 +791,7 @@ async function loadFile(f){
 async function openBytes(bytes,name){
   if(doc){try{doc.destroy()}catch(e){}}
   doc=await pdfjsLib.getDocument({data:bytes.slice(),isEvalSupported:false}).promise;
-  src=bytes;fname=name;pages=[];inkMap=[];inkJobs=[];manual={};pcache.clear();flagged=null;cur=0;
+  src=bytes;fname=name;pages=[];inkMap=[];inkJobs=[];manual={};pcache.clear();flagged=null;cur=0;activeStamp=null;
   for(let i=0;i<doc.numPages;i++){const p=await doc.getPage(i+1),v=p.getViewport({scale:1});pages.push({w:v.width,h:v.height})}
   cfg.a=1;cfg.b=pages.length;cfg.sD=1;cfg.sH=pages.length;syncInputs();
   $('#drop').hidden=true;$('#viewer').hidden=false;$('#apply').disabled=$('#analyze').disabled=false;$('#fname').textContent=name;
@@ -704,18 +815,22 @@ async function demoPdf(){
 }
 
 /* ---------- vista previa ---------- */
-function setMode(m){mode=m;for(const b of $$('#modeSeg button'))b.setAttribute('aria-pressed',b.dataset.m===m);$('#cw').hidden=m!=='one';$('#navOne').style.visibility=m==='one'?'visible':'hidden';$('#grid').hidden=m!=='all';if(m==='all')buildGrid();else renderPage()}
+function setMode(m){mode=m;for(const b of $$('#modeSeg button'))b.setAttribute('aria-pressed',b.dataset.m===m);$('#cw').hidden=m!=='one';$('#navOne').hidden=m!=='one';$('#fitWidth').hidden=m!=='one';$('#pnote').hidden=m!=='one';$('#grid').hidden=m!=='all';if(m==='all')buildGrid();else renderPage()}
 for(const b of $$('#modeSeg button'))b.onclick=()=>setMode(b.dataset.m);
-function go(i){cur=Math.max(0,Math.min(pages.length-1,i));$('#pg').value=cur+1;if(mode!=='one')setMode('one');else renderPage()}
+function go(i){activeStamp=null;cur=Math.max(0,Math.min(pages.length-1,i));$('#pg').value=cur+1;if(mode!=='one')setMode('one');else renderPage()}
 $('#prev').onclick=()=>go(cur-1);$('#next').onclick=()=>go(cur+1);$('#pg').onchange=e=>go((+e.target.value||1)-1);
+$('#fitWidth').onclick=()=>{
+  fitWidth=!fitWidth;zoom=1;$('#fitWidth').setAttribute('aria-pressed',fitWidth);renderPage();
+};
 $('#zi').onclick=()=>{zoom=Math.min(3,zoom*1.25);renderPage()};$('#zo').onclick=()=>{zoom=Math.max(.5,zoom/1.25);renderPage()};
 document.addEventListener('keydown',e=>{if(mode!=='one'||!pages.length||!$('#sm').hidden||/INPUT|SELECT|TEXTAREA/.test(document.activeElement.tagName))return;if(e.key==='ArrowRight')go(cur+1);if(e.key==='ArrowLeft')go(cur-1)});
 async function renderPage(){
   if(!doc||mode!=='one')return;const i=cur,P=pages[i],cwE=$('#cw'),dpr=window.devicePixelRatio||1,fitH=Math.max(260,innerHeight*(innerWidth<=600?.62:.78)-34);
-  kc=Math.min(Math.max(200,cwE.clientWidth-32)/P.w,fitH/P.h)*zoom;
+  const widthScale=Math.max(1,cwE.clientWidth-32)/P.w;
+  kc=(fitWidth?widthScale:Math.min(widthScale,fitH/P.h))*zoom;
   const pc=$('#pc'),oc=$('#oc'),cssW=P.w*kc,cssH=P.h*kc;if(renderTask){try{renderTask.cancel()}catch(e){}}
   const pg=await doc.getPage(i+1);if(i!==cur)return;const vp=pg.getViewport({scale:kc*dpr}),tmp=document.createElement('canvas');tmp.width=Math.round(vp.width);tmp.height=Math.round(vp.height);
-  renderTask=pg.render({canvasContext:tmp.getContext('2d'),viewport:vp});try{await renderTask.promise}catch(e){return}if(i!==cur)return;
+  renderTask=pg.render({canvasContext:tmp.getContext('2d'),viewport:vp});try{await renderTask.promise}catch(e){return}if(i!==cur||mode!=='one')return;
   pc.width=oc.width=tmp.width;pc.height=oc.height=tmp.height;for(const c of [pc,oc]){c.style.width=cssW+'px';c.style.height=cssH+'px'}pc.getContext('2d').drawImage(tmp,0,0);
   drawOverlay(oc,i,kc*dpr);note();
 }
@@ -725,18 +840,44 @@ function drawOverlay(c,i,k){
   const pl=placeAll(i);if(pl===null){ensureInk(i).then(()=>redrawPage(i));return}
   if(cfg.sm==='din'&&cfg.fr&&cfg.frMm>0&&pl.length){x.fillStyle='rgba(255,183,77,.13)';x.fillRect(0,0,cfg.frMm*MM*k,c.height)}
   for(const p of pl){const s=p.s;x.drawImage(stampCanvas(s),p.x*MM*k,p.y*MM*k,s.w*MM*k,s.h*MM*k);
-    if(p.man||p.f>0.04){x.setLineDash([6,4]);x.lineWidth=Math.max(1,k*.8);x.strokeStyle=p.man?'#0d5bd7':'#e53935';x.strokeRect(p.x*MM*k,p.y*MM*k,s.w*MM*k,s.h*MM*k);x.setLineDash([])}}
+    if(p.man||p.f>0.04){x.setLineDash([6,4]);x.lineWidth=Math.max(1,k*.8);x.strokeStyle=p.man?'#0d5bd7':'#e53935';x.strokeRect(p.x*MM*k,p.y*MM*k,s.w*MM*k,s.h*MM*k);x.setLineDash([])}
+    if(mode==='one'&&activeStamp===s.id){
+      x.save();x.strokeStyle='#0d47a1';x.lineWidth=Math.max(2,k*2);
+      x.strokeRect(p.x*MM*k,p.y*MM*k,s.w*MM*k,s.h*MM*k);x.restore();
+    }
+  }
 }
 function redrawPage(i){if(mode==='one'&&i===cur){drawOverlay($('#oc'),i,kc*(window.devicePixelRatio||1));note()}if(mode==='all'){const t=document.querySelector(`.th[data-i="${i}"] canvas+canvas`);if(t&&t.dataset.k)drawOverlay(t,i,+t.dataset.k)}}
 function redraw(){if(!doc)return;if(mode==='one'){drawOverlay($('#oc'),cur,kc*(window.devicePixelRatio||1));note()}else for(const t of $$('.th canvas+canvas'))if(t.dataset.k)drawOverlay(t,+t.closest('.th').dataset.i,+t.dataset.k)}
 function note(){
   const n=$('#pnote'),i=cur,fn=folioNum(i);n.textContent='';const b=document.createElement('b');b.textContent=`Hoja ${i+1}`+(fn===null?' · sin folio':` → folio ${fmt(fn)}`);n.append(b);
-  const pl=placeAll(i)||[],sp=document.createElement('span');
-  if(!pl.length)sp.textContent=usedStamps().length?'Esta hoja no se sella.':'Sin sellos marcados.';
+  const placements=placeAll(i),pl=placements||[],sp=document.createElement('span');
+  if(placements===null){sp.textContent='Buscando espacio para los sellos…';n.append(sp);return}
+  if(pl.length){
+    const count=document.createElement('b');count.textContent=`${pl.length} de ${usedStamps().length} sellos colocados`;n.append(count);
+    const links=document.createElement('div');links.className='stamp-links';
+    for(const [index,p] of pl.entries()){
+      const button=document.createElement('button');button.className='btn sm';
+      button.textContent=`${index+1}. ${p.s.ref}`;button.setAttribute('aria-pressed',activeStamp===p.s.id);
+      button.onclick=()=>{
+        activeStamp=activeStamp===p.s.id?null:p.s.id;
+        for(const [j,item] of [...links.children].entries())item.setAttribute('aria-pressed',pl[j].s.id===activeStamp);
+        drawOverlay($('#oc'),i,kc*(window.devicePixelRatio||1));
+        if(activeStamp){
+          const viewer=$('#cw');
+          viewer.scrollTo({top:$('#sheet').offsetTop+(p.y+p.s.h/2)*MM*kc-viewer.clientHeight/2,
+            left:$('#sheet').offsetLeft+(p.x+p.s.w/2)*MM*kc-viewer.clientWidth/2});
+        }
+      };
+      links.append(button);
+    }
+    n.append(links);
+  }
+  if(!pl.length&&sealing())sp.textContent=usedStamps().length?'Esta hoja no se sella.':'Sin sellos marcados.';
   else if(pl.some(p=>p.f>0.04&&!p.man)){sp.className='warn';sp.textContent='Un sello toca contenido en esta hoja: arrástralo o achícalo.'}
   else if(pl.some((a,j)=>pl.some((b,q)=>q>j&&a.x<b.x+b.s.w&&b.x<a.x+a.s.w&&a.y<b.y+b.s.h&&b.y<a.y+a.s.h))){sp.className='warn';sp.textContent='Dos sellos se superponen: cambia su posición o arrastra uno.'}
   else sp.textContent=cfg.sm==='est'?'Arrastra un sello para cambiar su posición en todas las hojas.':'Arrastra un sello para moverlo solo en esta hoja.';
-  n.append(sp);
+  if(pl.length||sealing())n.append(sp);
   if(pl.some(p=>p.man)){const r=document.createElement('button');r.className='btn sm';r.textContent='Volver a automático';r.onclick=()=>{delete manual[i];redraw()};n.append(r)}
 }
 let drag=null;const oc=$('#oc');
@@ -773,8 +914,11 @@ async function analyzeAll(to=1){
 function showReview(){
   const r=$('#review');r.textContent='';if(!flagged||!pages.length){r.hidden=true;return}r.hidden=false;
   if(!flagged.length){const s=document.createElement('span');s.className='ok';s.textContent='Todo bien: en todas las hojas los sellos cayeron en espacio libre.';r.append(s);return}
-  const t=document.createElement('span');t.className='warn';t.textContent=`Revisa ${flagged.length===1?'esta hoja':'estas '+flagged.length+' hojas'}: los sellos tocan algo de contenido.`;
-  const ch=document.createElement('div');ch.className='chips';for(const i of flagged.slice(0,80)){const b=document.createElement('button');b.textContent='Hoja '+(i+1);b.onclick=()=>go(i);ch.append(b)}
+  const t=document.createElement('button');t.className='btn sm warn';
+  t.textContent=`Revisar ${flagged.length} ${flagged.length===1?'hoja':'hojas'}`;
+  function reviewPage(i){go(i);$('#cw').scrollIntoView({block:'nearest'})}
+  t.onclick=()=>reviewPage(flagged[0]);
+  const ch=document.createElement('div');ch.className='chips';for(const i of flagged.slice(0,80)){const b=document.createElement('button');b.textContent='Hoja '+(i+1);b.onclick=()=>reviewPage(i);ch.append(b)}
   if(flagged.length>80){const m=document.createElement('span');m.textContent=`y ${flagged.length-80} más`;ch.append(m)}r.append(t,ch);
 }
 $('#analyze').onclick=async()=>{const b=$('#analyze');if(!usedStamps().length){dialog('No hay sellos marcados','Marca al menos un sello en la biblioteca.');return}if(sealSet().err){dialog('Revisa las hojas a sellar',sealSet().err);return}
@@ -785,13 +929,14 @@ function mapper(page){const cb=page.getCropBox(),r=((page.getRotation().angle%36
 async function pngOf(s){const c=stampCanvas(s),bl=await new Promise(r=>c.toBlob(r,'image/png'));return new Uint8Array(await bl.arrayBuffer())}
 $('#apply').onclick=async()=>{
   if(!permitido(pages.length)){pedirPro();return}
-  if(usedStamps().length&&sealSet().err){dialog('Revisa las hojas a sellar',sealSet().err);return}
-  if(!cfg.fol&&!usedStamps().length){dialog('No hay nada que aplicar','Activa «Foliar» o marca al menos un sello.');return}
+  const selectedStamps=sealing()?usedStamps():[];
+  if(selectedStamps.length&&sealSet().err){dialog('Revisa las hojas a sellar',sealSet().err);return}
+  if(!foliating()&&!selectedStamps.length){dialog('No hay nada que aplicar','Activa «Foliar» o marca al menos un sello.');return}
   const btn=$('#apply');btn.disabled=true;prog(0);
   try{
     await analyzeAll(.6);status('Preparando el PDF…');await tick();
     const pd=await PDFDocument.load(src,{ignoreEncryption:true}),font=await pd.embedFont(StandardFonts.HelveticaBold),imgs={};
-    for(const s of usedStamps())imgs[s.id]=await pd.embedPng(await pngOf(s));
+    for(const s of selectedStamps)imgs[s.id]=await pd.embedPng(await pngOf(s));
     const pl=pd.getPages(),wFn=(t,sz)=>font.widthOfTextAtSize(t,sz);
     for(let i=0;i<pl.length;i++){
       const fb=folioBox(i,wFn),pls=placeAll(i)||[];if(!fb&&!pls.length)continue;const page=pl[i],M=mapper(page);wrapPage(pd,page);
@@ -801,7 +946,7 @@ $('#apply').onclick=async()=>{
       if(i%10===0){status(`Aplicando en la hoja ${i+1} de ${pl.length}…`);prog(.6+.3*i/pl.length);await tick()}
     }
     status('Guardando…');prog(.95);await tick();
-    const out=await pd.save(),name=fname.replace(/\.pdf$/i,'')+(cfg.fol?'_foliado':'_sellado')+'.pdf';prog(1);
+    const out=await pd.save(),name=fname.replace(/\.pdf$/i,'')+(foliating()?'_foliado':'_sellado')+'.pdf';prog(1);
     const r=await saveFile(out,name);status(r+(flagged&&flagged.length?` Ojo: en ${flagged.length} hoja(s) un sello toca contenido; están en la lista para revisar.`:''));
   }catch(e){console.error(e);dialog('No se pudo completar','Ocurrió un error al procesar el PDF. Si tiene contraseña o está dañado, prueba con otra copia.');status('No se completó.')}
   btn.disabled=false;setTimeout(()=>prog(null),1200);
@@ -835,24 +980,189 @@ function uRender(){const l=$('#uList');l.textContent='';uFiles.forEach((f,i)=>{c
   up.onclick=()=>{if(i){[uFiles[i-1],uFiles[i]]=[uFiles[i],uFiles[i-1]];uRender()}};dn.onclick=()=>{if(i<uFiles.length-1){[uFiles[i+1],uFiles[i]]=[uFiles[i],uFiles[i+1]];uRender()}};x.onclick=()=>{uFiles.splice(i,1);uRender()};
   li.append(s,sm,up,dn,x);l.append(li)});$('#uGo').disabled=uFiles.length<2;$('#uSt').textContent=uFiles.length?`${uFiles.reduce((a,f)=>a+f.n,0)} hojas en total.`:''}
 $('#uIn').onchange=async e=>{for(const f of e.target.files){try{const r=await readPdf(f);uFiles.push({name:f.name,b:r.b,n:r.n})}catch(err){dialog('No se pudo abrir '+f.name,'El archivo parece dañado o tiene contraseña.')}}e.target.value='';uRender()};
-$('#uGo').onclick=async()=>{if(!permitido(uFiles.reduce((a,f)=>a+f.n,0))){pedirPro();return}const b=$('#uGo');b.disabled=true;$('#uSt').textContent='Uniendo…';try{const o=await PDFDocument.create();for(const f of uFiles){const d=await PDFDocument.load(f.b,{ignoreEncryption:true});for(const p of await o.copyPages(d,d.getPageIndices()))o.addPage(p)}$('#uSt').textContent=await saveFile(await o.save(),'unido.pdf')}catch(e){console.error(e);$('#uSt').textContent='No se pudo unir.'}b.disabled=false};
+$('#uGo').onclick=async()=>{if(!permitido(uFiles.reduce((a,f)=>a+f.n,0))){pedirPro();return}const b=$('#uGo');b.disabled=true;$('#uSt').textContent='Uniendo…';try{const o=await PDFDocument.create();for(const f of uFiles){const d=await PDFDocument.load(f.b,{ignoreEncryption:true});for(const p of await o.copyPages(d,d.getPageIndices()))o.addPage(p)}$('#uSt').textContent=await saveFile(await o.save(),($('#uName').value.trim().replace(/\.pdf$/i,'')||'unido')+'.pdf')}catch(e){console.error(e);$('#uSt').textContent='No se pudo unir.'}b.disabled=false};
+
+/* ---------- miniaturas de organización ---------- */
+async function loadPicker(file, grid, select){
+  const source=await readPdf(file);
+  const pdf=await pdfjsLib.getDocument({data:source.b.slice(),isEvalSupported:false}).promise;
+  grid.observer?.disconnect();
+  if(grid.pdf)grid.pdf.destroy().catch(()=>{});
+  grid.pdf=pdf;grid.replaceChildren();
+  const observer=new IntersectionObserver(entries=>{
+    for(const entry of entries){
+      if(!entry.isIntersecting)continue;
+      const button=entry.target;observer.unobserve(button);
+      pdf.getPage(+button.dataset.page).then(async page=>{
+        if(grid.pdf!==pdf)return;
+        const size=page.getViewport({scale:1}),view=page.getViewport({scale:100/Math.max(size.width,size.height)});
+        const canvas=button.firstElementChild;canvas.width=Math.ceil(view.width);canvas.height=Math.ceil(view.height);
+        await page.render({canvasContext:canvas.getContext('2d'),viewport:view}).promise;
+      }).catch(console.error);
+    }
+  },{root:grid,rootMargin:'120px'});
+  grid.observer=observer;
+  for(let n=1;n<=source.n;n++){
+    const button=document.createElement('button'),canvas=document.createElement('canvas'),label=document.createElement('span');
+    button.type='button';button.dataset.page=n;canvas.width=canvas.height=1;
+    label.textContent='Hoja '+n;button.append(canvas,label);button.onclick=e=>select(n,e);grid.append(button);observer.observe(button);
+  }
+  return {name:file.name.replace(/.pdf$/i,''),...source};
+}
+function rangePages(ranges){return new Set(ranges.flatMap(([a,b])=>Array.from({length:b-a+1},(_,i)=>a+i)))}
+function groupedPages(cuts,n){
+  let start=1;
+  return [...cuts,n].sort((a,b)=>a-b).map(end=>{const group=[start,end];start=end+1;return group});
+}
+const rangeText=ranges=>ranges.map(([a,b])=>a===b?String(a):a+'-'+b).join(', ');
 
 /* ---------- extraer y dividir ---------- */
-let eF=null;
-$('#eIn').onchange=async e=>{const f=e.target.files[0];e.target.value='';if(!f)return;try{const r=await readPdf(f);eF={name:f.name.replace(/\.pdf$/i,''),...r};$('#eInfo').textContent=`${f.name} · ${r.n} hojas`;$('#eOne').disabled=$('#eSplit').disabled=false}catch(err){dialog('No se pudo abrir el PDF','El archivo parece dañado o tiene contraseña.')}};
-async function pick(rs){const o=await PDFDocument.create(),idx=[];for(const [a,b] of rs)for(let p=a;p<=b;p++)idx.push(p-1);for(const p of await o.copyPages(eF.d,idx))o.addPage(p);return o.save()}
-$('#eOne').onclick=async()=>{if(!permitido(eF.n)){pedirPro();return}try{const t=$('#eR').value.trim();if(!t){$('#eSt').textContent='Escribe qué hojas quieres extraer.';return}const rs=parseRanges(t,eF.n);$('#eSt').textContent='Extrayendo…';$('#eSt').textContent=await saveFile(await pick(rs),`${eF.name}_hojas.pdf`)}catch(e){$('#eSt').textContent=e.message}};
-$('#eSplit').onclick=async()=>{if(!permitido(eF.n)){pedirPro();return}try{const t=$('#eR').value.trim(),rs=t?parseRanges(t,eF.n):Array.from({length:eF.n},(_,i)=>[i+1,i+1]);if(!window.JSZip)throw new Error('No cargó la herramienta para crear el ZIP.');const z=new JSZip();
-  for(let k=0;k<rs.length;k++){$('#eSt').textContent=`Creando parte ${k+1} de ${rs.length}…`;const [a,b]=rs[k];z.file(`${eF.name}_${a===b?a:a+'-'+b}.pdf`,await pick([[a,b]]));await tick()}
-  $('#eSt').textContent=await saveFile(await z.generateAsync({type:'uint8array'}),`${eF.name}_dividido.zip`)}catch(e){$('#eSt').textContent=e.message}};
+let eF=null, cuts=new Set(), fileGroups=[];
+function updateExtract(){
+  const input=$('#eR'),summary=$('#eSummary');
+  if(!eF){summary.textContent='';return}
+  const text=input.value.trim();fileGroups=[];
+  let selected=new Set();
+  try{
+    if(splitTool){
+      fileGroups=text?parseRanges(text,eF.n):groupedPages(cuts,eF.n);
+      selected=new Set(fileGroups.map(([,end])=>end).filter(end=>end<eF.n));
+      summary.textContent=fileGroups.length===1?'Se generará 1 PDF.':`Se generarán ${fileGroups.length} PDF en un ZIP.`;
+    }else{
+      selected=text?rangePages(parseRanges(text,eF.n)):new Set();
+      fileGroups=[...selected].sort((a,b)=>a-b).map(n=>[n,n]);
+      summary.textContent=`${selected.size} hojas marcadas.`;
+    }
+  }catch(e){summary.textContent=e.message}
+  for(const button of $('#ePages').children){
+    const n=+button.dataset.page;
+    button.disabled=splitTool&&n===eF.n;
+    button.setAttribute('aria-pressed',selected.has(n));
+    button.lastElementChild.textContent=splitTool&&selected.has(n)?'Corte tras hoja '+n:'Hoja '+n;
+  }
+  $('#eOne').disabled=$('#eSplit').disabled=!fileGroups.length;
+}
+function chooseExtract(n){
+  if(splitTool){
+    const text=$('#eR').value.trim();
+    if(text)cuts=new Set(fileGroups.map(([,end])=>end).filter(end=>end<eF.n));
+    if(cuts.has(n))cuts.delete(n);else cuts.add(n);
+    $('#eR').value=rangeText(groupedPages(cuts,eF.n));
+  }else{
+    const selected=rangePages(fileGroups);
+    if(selected.has(n))selected.delete(n);else selected.add(n);
+    $('#eR').value=[...selected].sort((a,b)=>a-b).join(', ');
+  }
+  updateExtract();
+}
+$('#eIn').onchange=async e=>{
+  const f=e.target.files[0];e.target.value='';if(!f)return;
+  try{
+    eF=await loadPicker(f,$('#ePages'),chooseExtract);
+    $('#eInfo').textContent=`${f.name} · ${eF.n} hojas`;
+    cuts.clear();$('#eR').value='';updateExtract();
+  }catch(err){dialog('No se pudo abrir el PDF','El archivo parece dañado o tiene contraseña.')}
+};
+$('#eR').oninput=()=>{cuts.clear();updateExtract()};
+for(const button of $$('[data-parts]'))button.onclick=()=>{
+  if(!eF)return;
+  const count=Math.min(eF.n,+button.dataset.parts||eF.n);
+  cuts=new Set(Array.from({length:count-1},(_,i)=>Math.ceil((i+1)*eF.n/count)));
+  $('#eR').value=rangeText(groupedPages(cuts,eF.n));updateExtract();
+};
+async function pick(source,ranges){
+  const out=await PDFDocument.create(),indices=[];
+  for(const [a,b] of ranges)for(let n=a;n<=b;n++)indices.push(n-1);
+  for(const page of await out.copyPages(source.d,indices))out.addPage(page);
+  return out.save();
+}
+async function saveGroups(split){
+  if(!eF||!fileGroups.length)return;
+  if(!permitido(eF.n)){pedirPro();return}
+  const source=eF,groups=fileGroups,button=split?$('#eSplit'):$('#eOne');
+  button.disabled=true;
+  try{
+    let data,name;
+    if(!split||groups.length===1){
+      data=await pick(source,groups);name=source.name+(split?'_parte':'_hojas')+'.pdf';
+    }else{
+      if(!window.JSZip)throw new Error('No cargó la herramienta ZIP.');
+      const zip=new JSZip();
+      for(const [index,range] of groups.entries()){
+        $('#eSt').textContent=`Creando parte ${index+1} de ${groups.length}…`;
+        zip.file(`${source.name}_parte_${index+1}.pdf`,await pick(source,[range]));await tick();
+      }
+      data=await zip.generateAsync({type:'uint8array'});name=source.name+'_dividido.zip';
+    }
+    $('#eSt').textContent=await saveFile(data,name);
+  }catch(e){$('#eSt').textContent=e.message}
+  updateExtract();
+}
+$('#eOne').onclick=()=>saveGroups(false);
+$('#eSplit').onclick=()=>saveGroups(true);
 
 /* ---------- girar ---------- */
-let gF=null,gA=90;
-$('#gIn').onchange=async e=>{const f=e.target.files[0];e.target.value='';if(!f)return;try{const r=await readPdf(f);gF={name:f.name.replace(/\.pdf$/i,''),...r};$('#gInfo').textContent=`${f.name} · ${r.n} hojas`;$('#gGo').disabled=false}catch(err){dialog('No se pudo abrir el PDF','El archivo parece dañado o tiene contraseña.')}};
-for(const b of $$('#gSeg button'))b.onclick=()=>{gA=+b.dataset.g;for(const x of $$('#gSeg button'))x.setAttribute('aria-pressed',x===b)};
-$('#gGo').onclick=async()=>{if(!permitido(gF.n)){pedirPro();return}try{const t=$('#gR').value.trim(),rs=t?parseRanges(t,gF.n):[[1,gF.n]],d=await PDFDocument.load(gF.b,{ignoreEncryption:true}),ps=d.getPages();
-  for(const [a,b] of rs)for(let p=a;p<=b;p++){const pg=ps[p-1];pg.setRotation(degrees((pg.getRotation().angle+gA)%360))}
-  $('#gSt').textContent=await saveFile(await d.save(),`${gF.name}_girado.pdf`)}catch(e){$('#gSt').textContent=e.message}};
+let gF=null, rotations=new Map(), lastPage=null;
+function updateRotation(){
+  if(!gF)return;
+  let selected=new Set(),error='';
+  try{if(!rotateWhole&&$('#gR').value.trim())selected=rangePages(parseRanges($('#gR').value,gF.n))}
+  catch(e){error=e.message}
+  $('#gAngle').textContent=error||`${rotations.size} hojas con cambios.`;
+  for(const button of $('#gPages').children){
+    const n=+button.dataset.page,angle=rotations.get(n)||0;
+    button.disabled=rotateWhole;button.setAttribute('aria-pressed',!rotateWhole&&selected.has(n));
+    button.firstElementChild.style.transform=`rotate(${angle}deg)`;
+    button.lastElementChild.textContent=`Hoja ${n}${angle?' · '+angle+'°':''}`;
+  }
+  for(const button of $$('#gSeg button'))button.disabled=!!error||(!rotateWhole&&!selected.size);
+  $('#gGo').disabled=!rotations.size;
+  $('#gReset').disabled=!rotations.size;
+  return selected;
+}
+function chooseRotation(n,e){
+  const selected=updateRotation();
+  if(e.shiftKey&&lastPage!==null){for(let i=Math.min(n,lastPage);i<=Math.max(n,lastPage);i++)selected.add(i)}
+  else if(selected.has(n))selected.delete(n);
+  else selected.add(n);
+  lastPage=n;
+  $('#gR').value=[...selected].sort((a,b)=>a-b).join(', ');updateRotation();
+}
+$('#gIn').onchange=async e=>{
+  const f=e.target.files[0];e.target.value='';if(!f)return;
+  try{
+    gF=await loadPicker(f,$('#gPages'),chooseRotation);
+    $('#gInfo').textContent=`${f.name} · ${gF.n} hojas`;
+    $('#gR').value='';lastPage=null;rotations.clear();updateRotation();
+  }catch(err){dialog('No se pudo abrir el PDF','El archivo parece dañado o tiene contraseña.')}
+};
+$('#gR').oninput=()=>{lastPage=null;updateRotation()};
+$('#gReset').onclick=()=>{rotations.clear();updateRotation()};
+for(const button of $$('#gSeg button')){
+  button.removeAttribute('aria-pressed');button.disabled=true;
+  button.onclick=()=>{
+    if(!gF)return;
+    const selected=rotateWhole?Array.from({length:gF.n},(_,i)=>i+1):updateRotation();
+    for(const n of selected){
+      const angle=((rotations.get(n)||0)+ +button.dataset.g)%360;
+      if(angle)rotations.set(n,angle);else rotations.delete(n);
+    }
+    updateRotation();
+  };
+}
+$('#gGo').onclick=async()=>{
+  if(!gF||!rotations.size)return;
+  if(!permitido(gF.n)){pedirPro();return}
+  const source=gF,changes=[...rotations];$('#gGo').disabled=true;
+  try{
+    const pdf=await PDFDocument.load(source.b,{ignoreEncryption:true});
+    for(const [n,angle] of changes){
+      const page=pdf.getPage(n-1);page.setRotation(degrees((page.getRotation().angle+angle)%360));
+    }
+    $('#gSt').textContent=await saveFile(await pdf.save(),source.name+'_girado.pdf');
+  }catch(e){$('#gSt').textContent=e.message}
+  updateRotation();
+};
 
 syncInputs();renderLib();renderEst();
 if(document.fonts){document.fonts.load('700 20px "Roboto Condensed"').catch(()=>{});document.fonts.ready.then(()=>{rcache.clear();refreshAll()})}

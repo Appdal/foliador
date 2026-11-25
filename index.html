@@ -697,7 +697,7 @@ function renderStamp(s){
   if(T.ent){const h=lh(s.ent)*sc,sp=!rect&&LS&&s.entSp!==false;if(sp)x.letterSpacing=(s.ent.pt*PT*sc*.12)+'px';const k=fit(s.ent,T.ent,maxW,sc);if(sp){x.letterSpacing=(s.ent.pt*PT*k*.12)+'px';fit(s.ent,T.ent,maxW,k)}x.fillText(T.ent,W/2,y+h/2);if(LS)x.letterSpacing='0px';y+=h}
   y+=zone;const lineY=y+gap*.35;
   let nameW=0;if(T.nom){fit(s.nom,T.nom,maxW,sc);nameW=x.measureText(T.nom).width}
-  const lwid=Math.min(maxW,Math.max(nameW*1.05,W*(rect?.5:.6)));
+  const lwid=Math.min(maxW,nameW||W*(rect?.5:.6));
   x.save();x.lineWidth=Math.max(1,.22*PXMM+inkW);x.lineCap='butt';x.setLineDash([1.1*PXMM,.7*PXMM]);x.beginPath();x.moveTo(W/2-lwid/2,lineY);x.lineTo(W/2+lwid/2,lineY);x.stroke();x.restore();
   y+=gap;
   for(const k of order){if(!T[k])continue;const h=lh(s[k])*sc;fit(s[k],T[k],maxW,sc);x.fillText(T[k],W/2,y+h/2);y+=h}

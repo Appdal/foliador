@@ -1,4 +1,4 @@
-# Foliador · Nara Alkatara
+# Nara Foliador
 
 Página web para foliar y sellar PDF (valorizaciones, expedientes) y para unir, extraer, dividir y girar hojas. Todo se procesa en el navegador; los archivos no se suben a ningún servidor.
 

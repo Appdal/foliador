@@ -129,6 +129,8 @@ input[type=number],input[type=text],select{width:100%;min-height:44px;padding:8p
 .pagePicker button{background:var(--soft);border:1px solid var(--line);border-radius:8px;min-width:0;min-height:130px;display:grid;justify-items:center;align-content:center;gap:6px;padding:5px}
 .pagePicker button[aria-pressed=true]{border-color:var(--blue);box-shadow:inset 0 0 0 1px var(--blue);color:var(--blue);font-weight:700}
 .pagePicker canvas{max-width:100%;max-height:100px;object-fit:contain}
+.pagePicker.del button[aria-pressed=true]{border-color:#c62828;box-shadow:inset 0 0 0 1px #c62828;color:#c62828;background:light-dark(#ffebee,#3b1416)}
+.pagePicker.del button[aria-pressed=true] canvas{opacity:.35}
 
 .flist{list-style:none;margin:0;padding:0;display:grid;gap:8px}
 .flist li{display:flex;align-items:center;gap:8px;background:var(--soft);border-radius:10px;padding:8px 10px}
@@ -247,8 +249,8 @@ input.inl{width:82px;min-height:40px}
       <button type="button" data-v="unir"><span class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="3" width="8" height="10" rx="1"/><rect x="13" y="3" width="8" height="10" rx="1"/><path d="M7 13v3a2 2 0 0 0 2 2h6a2 2 0 0 0 2-2v-3"/><path d="M12 18v3"/></svg></span>Unir PDF<small>Combina varios archivos en uno.</small></button>
       <button type="button" data-v="extraer"><span class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M7 3h7l4 4v13a1 1 0 0 1-1 1H7a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1z"/><path d="M14 3v4h4"/><path d="M12 10v7"/><path d="M9 14l3 3 3-3"/></svg></span>Extraer páginas<small>Guarda solo las hojas que elijas.</small></button>
       <button type="button" data-v="dividir"><span class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="4" y="3" width="16" height="7" rx="1"/><rect x="4" y="14" width="16" height="7" rx="1"/><path d="M2 12h3M8 12h3M14 12h3M20 12h2"/></svg></span>Dividir PDF<small>Separa el archivo en partes.</small></button>
-      <button type="button" data-v="girar"><span class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="8" y="8" width="9" height="12" rx="1"/><path d="M4 11a8 8 0 0 1 13-6.5"/><path d="M17 2v3h-3"/></svg></span>Rotar hojas<small>Corrige páginas específicas.</small></button>
-      <button type="button" data-v="girar-todo"><span class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="9" y="10" width="9" height="11" rx="1"/><path d="M6 17V8a1 1 0 0 1 1-1h7"/><path d="M3 9a9 9 0 0 1 15-5"/><path d="M18 1.5V4h-2.5"/></svg></span>Rotar todo<small>Gira todas las hojas a la vez.</small></button>
+      <button type="button" data-v="eliminar"><span class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 7h16"/><path d="M9 7V4h6v3"/><path d="M6 7l1 13a1 1 0 0 0 1 1h8a1 1 0 0 0 1-1l1-13"/><path d="M10 11v6M14 11v6"/></svg></span>Eliminar páginas<small>Quita hojas por rango o sueltas.</small></button>
+      <button type="button" data-v="girar"><span class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="8" y="8" width="9" height="12" rx="1"/><path d="M4 11a8 8 0 0 1 13-6.5"/><path d="M17 2v3h-3"/></svg></span>Rotar PDF<small>Gira todas las hojas o solo algunas.</small></button>
     </div>
   </div>
   <div class="half a">
@@ -429,11 +431,13 @@ input.inl{width:82px;min-height:40px}
 
 <section class="view" id="v-girar" hidden>
   <div class="tool">
-    <h2 id="rotateTitle" tabindex="-1">Rotar hojas</h2>
+    <h2 id="rotateTitle" tabindex="-1">Rotar PDF</h2>
     <p>Útil para planos escaneados de costado.</p>
     <div class="card" style="display:grid;gap:12px">
       <span class="btn filebtn" style="justify-self:start">Elegir PDF<input type="file" id="gIn" accept="application/pdf,.pdf"></span>
       <div class="status" id="gInfo"></div>
+      <div><div class="lbl" style="margin-top:0">¿Qué hojas quieres girar?</div>
+      <div class="seg" id="gScope"><button type="button" data-scope="esp" aria-pressed="true">Hojas específicas</button><button type="button" data-scope="todas" aria-pressed="false">Todas las hojas</button></div></div>
       <label class="f" id="gRange">Hojas<input type="text" id="gR" placeholder="2, 7-9"></label>
       <div class="seg" id="gSeg"><button data-g="90" aria-pressed="true">90° derecha</button><button data-g="180" aria-pressed="false">180°</button><button data-g="270" aria-pressed="false">90° izquierda</button></div>
       <div class="row"><span id="gAngle" aria-live="polite"></span><button class="btn sm" id="gReset" disabled>Restablecer giros</button></div>
@@ -542,13 +546,13 @@ $('#dlgOk').onclick=()=>{$('#dlg').hidden=true;dlgRes&&dlgRes(true)};$('#dlgNo')
 if(!libsOk) setTimeout(()=>dialog('No cargaron las herramientas','Revisa tu conexión a internet y vuelve a abrir la página.'),300);
 
 /* ---------- pestañas ---------- */
-let editorTool='combinar', splitTool=false, rotateWhole=false;
+let editorTool='combinar', splitTool=false, deleteTool=false, rotateWhole=false;
 const foliating=()=>editorTool==='foliar'||(editorTool==='combinar'&&cfg.fol);
 const sealing=()=>editorTool!=='foliar';
 for(const button of $$('[data-v]')) button.onclick=()=>{
   const tool=button.dataset.v;
   const editor=['foliar','sellar','combinar'].includes(tool);
-  const extract=['extraer','dividir'].includes(tool),rotate=['girar','girar-todo'].includes(tool);
+  const extract=['extraer','dividir','eliminar'].includes(tool),rotate=['girar','girar-todo'].includes(tool);
   const view=editor?'foliar':extract?'extraer':rotate?'girar':tool;
   for(const tab of $$('.tabs button'))tab.removeAttribute('aria-current');
   const tab=button.closest('.tabs')?button:$('[data-section="'+(editor?'folioTools':'organizeTools')+'"]');
@@ -562,18 +566,16 @@ for(const button of $$('[data-v]')) button.onclick=()=>{
     syncInputs();flagged=null;showReview();updateHint();if(doc)setMode(mode);
   }
   if(extract){
-    splitTool=tool==='dividir';
-    $('#extractTitle').textContent=splitTool?'Dividir PDF':'Extraer páginas';
+    splitTool=tool==='dividir';deleteTool=tool==='eliminar';
+    $('#extractTitle').textContent=splitTool?'Dividir PDF':deleteTool?'Eliminar páginas':'Extraer páginas';
     $('#splitOptions').hidden=$('#eSplit').hidden=!splitTool;$('#eOne').hidden=splitTool;
-    $('#ePreviewHint').textContent=splitTool?'Toca una miniatura para cortar después de esa hoja.':'Toca las miniaturas para marcar las hojas que quieres extraer.';
+    $('#eOne').textContent=deleteTool?'Eliminar y descargar':'Extraer en un solo PDF';
+    $('#ePages').classList.toggle('del',deleteTool);
+    $('#ePreviewHint').textContent=splitTool?'Toca una miniatura para cortar después de esa hoja.':deleteTool?'Escribe un rango (por ejemplo 3-7) o hojas sueltas (2, 9), o toca las miniaturas de las hojas que quieres eliminar.':'Toca las miniaturas para marcar las hojas que quieres extraer.';
     $('#eR').value='';cuts.clear();updateExtract();
   }
   if(rotate){
-    const whole=tool==='girar-todo';
-    if(whole!==rotateWhole){rotations.clear();$('#gR').value='';lastPage=null}
-    rotateWhole=whole;
-    $('#rotateTitle').textContent=rotateWhole?'Rotar todo el PDF':'Rotar hojas';
-    $('#gRange').hidden=rotateWhole;updateRotation();
+    setRotateScope(tool==='girar-todo'?true:rotateWhole);
   }
   const heading=button.dataset.section?document.getElementById(button.dataset.section):$('#v-'+view+' h2');
   if(view==='inicio'&&!button.dataset.section)window.scrollTo(0,0);
@@ -1129,7 +1131,11 @@ function updateExtract(){
     }else{
       selected=text?rangePages(parseRanges(text,eF.n)):new Set();
       fileGroups=[...selected].sort((a,b)=>a-b).map(n=>[n,n]);
-      summary.textContent=`${selected.size} hojas marcadas.`;
+      if(deleteTool){
+        const keep=eF.n-selected.size;
+        if(selected.size&&!keep){fileGroups=[];summary.textContent='No puedes eliminar todas las hojas: debe quedar al menos una.'}
+        else summary.textContent=selected.size?`Se eliminarán ${selected.size} ${selected.size===1?'hoja':'hojas'} y quedarán ${keep}.`:'Marca las hojas que quieres eliminar.';
+      }else summary.textContent=`${selected.size} hojas marcadas.`;
     }
   }catch(e){summary.textContent=e.message}
   for(const button of $('#ePages').children){
@@ -1181,7 +1187,12 @@ async function saveGroups(split){
   button.disabled=true;
   try{
     let data,name;
-    if(!split||groups.length===1){
+    if(deleteTool&&!split){
+      const del=rangePages(groups),keep=[];
+      for(let n=1;n<=source.n;n++)if(!del.has(n)){const last=keep[keep.length-1];if(last&&last[1]===n-1)last[1]=n;else keep.push([n,n])}
+      if(!keep.length)throw new Error('No puedes eliminar todas las hojas.');
+      data=await pick(source,keep);name=source.name+'_editado.pdf';
+    }else if(!split||groups.length===1){
       data=await pick(source,groups);name=source.name+(split?'_parte':'_hojas')+'.pdf';
     }else{
       if(!window.JSZip)throw new Error('No cargó la herramienta ZIP.');
@@ -1235,6 +1246,13 @@ $('#gIn').onchange=async e=>{
   }catch(err){dialog('No se pudo abrir el PDF','El archivo parece dañado o tiene contraseña.')}
 };
 $('#gR').oninput=()=>{lastPage=null;updateRotation()};
+function setRotateScope(whole){
+  if(whole!==rotateWhole){rotations.clear();$('#gR').value='';lastPage=null}
+  rotateWhole=whole;
+  for(const b of $$('#gScope button'))b.setAttribute('aria-pressed',(b.dataset.scope==='todas')===whole);
+  $('#gRange').hidden=whole;updateRotation();
+}
+for(const b of $$('#gScope button'))b.onclick=()=>setRotateScope(b.dataset.scope==='todas');
 $('#gReset').onclick=()=>{rotations.clear();updateRotation()};
 for(const button of $$('#gSeg button')){
   button.removeAttribute('aria-pressed');button.disabled=true;

@@ -154,6 +154,7 @@ input[type=number],input[type=text],select{width:100%;min-height:44px;padding:8p
 .mbody{display:grid;grid-template-columns:minmax(0,1fr) 330px;gap:18px;padding:16px 18px;overflow:auto;align-items:start}
 .mform{display:grid;gap:12px;align-content:start}
 .fg{display:grid;gap:8px;padding:12px;border:1px solid var(--line);border-radius:10px}
+.stamp-text-styles{display:flex;flex-wrap:wrap;gap:4px 16px}
 .fg>span{font-size:14px;color:var(--mut)}
 .frow{display:grid;grid-template-columns:minmax(0,1fr) 70px auto auto;gap:8px;align-items:center}
 .frow .u{font-size:13px;color:var(--mut)}
@@ -476,11 +477,6 @@ input.inl{width:82px;min-height:40px}
             <label class="chk"><input type="checkbox" id="fEntSp"> Letras espaciadas en la primera línea (empresa)</label>
             <label class="f">Espacio entre líneas <output id="fLhValue"></output><input type="range" data-f="lh" min="80" max="130" step="1" aria-label="Espacio entre líneas del sello"></label>
           </div>
-          <div class="fg"><span>Firma escaneada (opcional)</span>
-            <div style="display:flex;gap:8px;flex-wrap:wrap"><span class="btn sm filebtn">Subir firma<input type="file" id="fFirma" accept="image/*"></span><button class="btn sm" id="fFirmaDel" hidden>Quitar firma</button></div>
-            <p class="hint" style="margin:0">Foto o escaneo de tu firma en papel blanco: el fondo blanco se quita solo.</p></div>
-          <div class="fg"><label class="f">Hojas donde va este sello (opcional)<input type="text" data-f="pages" placeholder="Vacío = todas. Ej.: 1-5, 8"></label>
-            <p class="hint" style="margin:0">Si lo dejas vacío, va en todas las hojas que se sellan.</p></div>
           <div><div class="lbl" style="margin-top:0">Color del sello</div>
             <div class="swatches" data-fs="color"><button data-val="negro" style="background:#1a1a1a" aria-label="Negro"></button><button data-val="azul" style="background:#1d3c9b" aria-label="Azul"></button><button data-val="rojo" style="background:#c62828" aria-label="Rojo"></button></div></div>
         </div>
@@ -494,6 +490,11 @@ input.inl{width:82px;min-height:40px}
           <div class="row"><label class="f">Ancho (mm)<input type="number" data-f="w" min="10" max="150" step="1"></label><label class="f">Alto (mm)<input type="number" data-f="h" min="6" max="150" step="1"></label></div>
           <p class="hint" style="margin:0">Al cambiar el ancho, el alto se ajusta para no deformar la imagen.</p>
         </div>
+          <div class="fg"><span>Firma escaneada (opcional)</span>
+            <div style="display:flex;gap:8px;flex-wrap:wrap"><span class="btn sm filebtn">Subir firma<input type="file" id="fFirma" accept="image/*"></span><button class="btn sm" id="fFirmaDel" hidden>Quitar firma</button></div>
+            <p class="hint" style="margin:0">Foto o escaneo de tu firma en papel blanco: el fondo blanco se quita solo.</p></div>
+          <div class="fg"><label class="f">Hojas donde va este sello (opcional)<input type="text" data-f="pages" placeholder="Vacío = todas. Ej.: 1-5, 8"></label>
+            <p class="hint" style="margin:0">Si lo dejas vacío, va en todas las hojas que se sellan.</p></div>
       </div>
       <div class="mprev"><b>Vista previa del sello</b><div class="pap"><canvas id="fPrev"></canvas></div><span class="hint" id="fReal" style="margin:0"></span></div>
     </div>
@@ -663,12 +664,25 @@ function arcText(x,t,cx,cy,r,top){if(!t)return;const ws=[...t].map(ch=>x.measure
   [...t].forEach((ch,k)=>{const d=ws[k]/r;a+=top?d/2:-d/2;x.save();x.translate(cx+r*Math.cos(a),cy+r*Math.sin(a));x.rotate(top?a+Math.PI/2:a-Math.PI/2);x.fillText(ch,0,0);x.restore();a+=top?d/2:-d/2})}
 function renderStamp(s){
   const W=Math.max(1,Math.round(s.w*PXMM)),H=Math.max(1,Math.round(s.h*PXMM)),c=document.createElement('canvas');c.width=W;c.height=H;const x=c.getContext('2d');
-  if(s.modo==='imagen'){const im=asset(s.img,s.bg,s.rotImg||0);if(im){const k=Math.min(W/im.width,H/im.height);x.drawImage(im,(W-im.width*k)/2,(H-im.height*k)/2,im.width*k,im.height*k)}return c}
+  if(s.modo==='imagen'){
+    const im=asset(s.img,s.bg,s.rotImg||0);
+    if(im){
+      const k=Math.min(W/im.width,H/im.height);
+      x.drawImage(im,(W-im.width*k)/2,(H-im.height*k)/2,im.width*k,im.height*k);
+      const firma=asset(s.firma,false);
+      if(firma){
+        const scale=Math.min(W*.55/firma.width,H*.60/firma.height);
+        const fw=firma.width*scale,fh=firma.height*scale;
+        x.drawImage(firma,(W-fw)/2,(H-fh)/2,fw,fh);
+      }
+    }
+    return c;
+  }
   const col=COLORS[s.color]||COLORS.negro;x.fillStyle=x.strokeStyle=col;x.textAlign='center';x.textBaseline='middle';
   const inkW=(+s.ink||0)*.09*PXMM;if(inkW){const ft=x.fillText.bind(x);x.fillText=(t,a,b)=>{ft(t,a,b);x.save();x.setLineDash([]);x.lineWidth=inkW;x.lineJoin='round';x.strokeText(t,a,b);x.restore()}}
   const T={ent:s.ent.t.trim(),nom:s.nom.t.trim(),car:s.car.t.trim(),cip:s.cip.t.trim()?(s.cipPre.trim()+' '+s.cip.t.trim()).trim():''};
   const firma=asset(s.firma,false);
-  const setF=(f,k)=>{x.font=`${f.b?700:400} ${Math.max(3,f.pt*PT*k)}px ${FONTS[f.font]||FONTS.Arial}`};
+  const setF=(f,k)=>{x.font=`${f.i?'italic ':''}${f.b?700:400} ${Math.max(3,f.pt*PT*k)}px ${FONTS[f.font]||FONTS.Arial}`};
   const fit=(f,t,maxW,k)=>{setF(f,k);while(k>.25&&x.measureText(t).width>maxW){k*=.95;setF(f,k)}return k};
   const LS='letterSpacing' in x;
   if(s.forma==='round'){
@@ -741,7 +755,7 @@ function refreshAll(){renderLib();if(cfg.sm==='est')renderEst();redraw();if(!$('
 /* ---------- editor de sellos ---------- */
 let draft=null,editing=null;
 const fontOpts=Object.keys(FONTS).map(f=>`<option>${f}</option>`).join('');
-$('#fFields').innerHTML=FIELDS.map(([k,l])=>`<div class="fg"><span>${l}</span>${k==='cip'?'<div class="frow" style="grid-template-columns:96px minmax(0,1fr)"><input type="text" data-f="cipPre" aria-label="Texto antes del número"><input type="text" data-f="cip.t" inputmode="numeric" aria-label="Número"></div>':`<input type="text" data-f="${k}.t" aria-label="${l}">`}<div class="frow"><select data-f="${k}.font" aria-label="Letra">${fontOpts}</select><input type="number" data-f="${k}.pt" min="3" max="40" step="0.5" aria-label="Tamaño en puntos"><span class="u">pt</span><label class="chk"><input type="checkbox" data-f="${k}.b"> Negrita</label></div></div>`).join('');
+$('#fFields').innerHTML=FIELDS.map(([k,l])=>`<div class="fg"><span>${l}</span>${k==='cip'?'<div class="frow" style="grid-template-columns:96px minmax(0,1fr)"><input type="text" data-f="cipPre" aria-label="Texto antes del número"><input type="text" data-f="cip.t" inputmode="numeric" aria-label="Número"></div>':`<input type="text" data-f="${k}.t" aria-label="${l}">`}<div class="frow"><select data-f="${k}.font" aria-label="Letra">${fontOpts}</select><input type="number" data-f="${k}.pt" min="3" max="40" step="0.5" aria-label="Tamaño en puntos"><span class="u">pt</span></div><div class="stamp-text-styles"><label class="chk"><input type="checkbox" data-f="${k}.b"> Negrita</label><label class="chk"><input type="checkbox" data-f="${k}.i"> Cursiva</label></div></div>`).join('');
 const getP=(o,p)=>p.split('.').reduce((a,k)=>a[k],o);
 const setP=(o,p,v)=>{const ks=p.split('.'),l=ks.pop();ks.reduce((a,k)=>a[k],o)[l]=v};
 function openEditor(s){
@@ -786,8 +800,9 @@ for(const g of $$('[data-fs]'))for(const b of g.querySelectorAll('button'))b.onc
   draft[k]=v;syncEditor();drawPreview();
 };
 $('#fSize').onchange=e=>{const v=e.target.value;$('#fCustom').hidden=v!=='custom';if(v!=='custom'){const [w,h]=v.split('x').map(Number);draft.w=w;draft.h=h;syncEditor()}drawPreview()};
-$('#fFirma').onchange=async e=>{const f=e.target.files[0];e.target.value='';if(!f)return;try{const im=await readImage(f,900);
+$('#fFirma').onchange=async e=>{const f=e.target.files[0],target=draft;e.target.value='';if(!f)return;try{const im=await readImage(f,900);
   const c=whitenC(await loadI(im.url),0),x=c.getContext('2d'),d=x.getImageData(0,0,c.width,c.height),p=d.data;for(let i=0;i<p.length;i+=4){const l=.3*p[i]+.59*p[i+1]+.11*p[i+2];if(l>205)p[i+3]=0;else if(l>150)p[i+3]=Math.round(p[i+3]*(205-l)/55)}x.putImageData(d,0,0);
+  if(draft!==target)return;
   draft.firma=trimCanvas(c).toDataURL('image/png');syncEditor();drawPreview()}catch(err){dialog('No se pudo leer la imagen','Prueba con una foto en JPG o PNG.')}};
 $('#fFirmaDel').onclick=()=>{draft.firma=null;syncEditor();drawPreview()};
 $('#fImg').onchange=async e=>{

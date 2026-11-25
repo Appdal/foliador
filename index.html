@@ -89,6 +89,7 @@ input[type=number],input[type=text],select{width:100%;min-height:44px;padding:8p
 .corners button{height:52px;border:1px solid var(--line);border-radius:8px;background:var(--soft);position:relative}
 .corners button::after{content:"";position:absolute;width:16px;height:6px;background:var(--mut);border-radius:2px}
 .corners [data-val=tl]::after{top:8px;left:8px}.corners [data-val=tr]::after{top:8px;right:8px}
+.corners [data-val=ml]::after{top:calc(50% - 3px);left:8px}.corners [data-val=mr]::after{top:calc(50% - 3px);right:8px}
 .corners [data-val=bl]::after{bottom:8px;left:8px}.corners [data-val=br]::after{bottom:8px;right:8px}
 .corners button[aria-pressed=true]{border-color:var(--acc);border-width:2px}
 .corners button[aria-pressed=true]::after{background:var(--acc)}
@@ -145,6 +146,7 @@ input[type=number],input[type=text],select{width:100%;min-height:44px;padding:8p
 .mprev{background:var(--soft);border-radius:12px;padding:12px;display:grid;gap:8px;align-content:start;position:sticky;top:0}
 .mprev .pap{background:#fff;border-radius:8px;display:grid;place-items:center;padding:16px;min-height:160px}
 .mprev canvas{max-width:100%;max-height:240px;height:auto}
+.mprev canvas.image-frame{outline:1px dashed #64809e;outline-offset:2px}
 .swatches{display:flex;gap:12px}
 .swatches button{width:42px;height:42px;border-radius:50%;border:3px solid var(--panel);box-shadow:0 0 0 1px var(--line)}
 .swatches button[aria-pressed=true]{box-shadow:0 0 0 3px var(--acc)}
@@ -249,6 +251,7 @@ input.inl{width:82px;min-height:40px}
             <input type="number" id="pg" min="1" value="1" aria-label="Hoja">
             <button class="ib" id="next" aria-label="Hoja siguiente">›</button>
             <button class="ib" id="zo" aria-label="Alejar">−</button>
+            <output id="zoomLevel" aria-label="Zoom">100 %</output>
             <button class="ib" id="zi" aria-label="Acercar">+</button>
           </div>
           <button class="btn sm" id="fitWidth" aria-pressed="false">Ajustar al ancho</button>
@@ -265,12 +268,15 @@ input.inl{width:82px;min-height:40px}
       <div class="card" id="folioCard">
         <label class="toggle" id="folioSwitch"><input type="checkbox" data-k="fol"> Foliar</label>
         <div id="folBox">
+          <div class="lbl">Hojas a foliar</div>
+          <label class="chk"><input type="checkbox" id="allFolios" checked> <span id="allFoliosLabel">Todas las hojas</span></label>
           <div class="row" style="margin-top:6px">
             <label class="f">Desde la hoja N.°<input type="number" min="1" data-k="a"></label>
             <label class="f">Hasta la hoja N.°<input type="number" min="1" data-k="b"></label>
           </div>
           <p class="hint" id="rangeHint">Carga un PDF para ver cuántas hojas tiene.</p>
-          <div class="row" style="margin-top:12px">
+          <div class="lbl">Numeración</div>
+          <div class="row">
             <label class="f">Folio inicial<input type="number" min="0" data-k="ini"></label>
             <label class="f">Dígitos<input type="number" min="1" max="10" data-k="dig"></label>
             <label class="f full">Texto antes del número (opcional)<input type="text" data-k="pre" placeholder="Ej.: Folio N.° "></label>
@@ -278,9 +284,10 @@ input.inl{width:82px;min-height:40px}
           <div class="lbl">Orden</div>
           <div class="seg" data-seg="ord"><button data-val="asc">Ascendente</button><button data-val="desc">Descendente</button></div>
           <p class="hint" id="ordHint"></p>
+          <div class="lbl">Posición del folio</div>
           <div style="display:flex;gap:16px;align-items:flex-start;flex-wrap:wrap;margin-top:12px">
-            <div><div class="lbl" style="margin-top:0">Esquina del folio</div>
-              <div class="corners" data-seg="cor"><button data-val="tl" aria-label="Arriba izquierda"></button><button data-val="tr" aria-label="Arriba derecha"></button><button data-val="bl" aria-label="Abajo izquierda"></button><button data-val="br" aria-label="Abajo derecha"></button></div>
+            <div><div class="lbl" style="margin-top:0">Posición en la hoja</div>
+              <div class="corners" data-seg="cor"><button data-val="tl" aria-label="Arriba izquierda"></button><button data-val="tr" aria-label="Arriba derecha"></button><button data-val="ml" aria-label="Media altura izquierda"></button><button data-val="mr" aria-label="Media altura derecha"></button><button data-val="bl" aria-label="Abajo izquierda"></button><button data-val="br" aria-label="Abajo derecha"></button></div>
             </div>
             <div class="row" style="flex:1 1 180px">
               <label class="f">Margen horiz. (mm)<input type="number" min="0" step="1" data-k="mh"></label>
@@ -289,7 +296,8 @@ input.inl{width:82px;min-height:40px}
             </div>
           </div>
           <div class="lbl">Rotación del folio</div>
-          <div class="seg" data-seg="rot"><button data-val="0">0°</button><button data-val="45">45°</button><button data-val="90">90°</button><button data-val="180">180°</button><button data-val="270">270°</button><button data-val="315">315°</button></div>
+          <div class="seg" data-seg="rot"><button data-val="0">0°</button><button data-val="45">45°</button><button data-val="90">90°</button><button data-val="135">135°</button><button data-val="180">180°</button><button data-val="225">225°</button><button data-val="270">270°</button><button data-val="315">315°</button></div>
+          <p class="hint" id="folioPositionHint"></p>
           <p class="hint">Los márgenes se miden desde el borde de cada hoja: funciona igual con A4, A3 u oficio mezcladas.</p>
         </div>
       </div>
@@ -408,11 +416,11 @@ input.inl{width:82px;min-height:40px}
         <label class="f">Nombre de referencia<input type="text" data-f="ref" placeholder="Ej.: Jefe de supervisión"></label>
         <div><div class="lbl" style="margin-top:0">¿Cómo quieres crear el sello?</div>
           <div class="tabs2" data-fs="modo"><button data-val="texto">Con campos de texto</button><button data-val="imagen">Con mi propia imagen</button></div></div>
+          <label class="f">Tamaño del sello<select id="fSize"></select></label>
+          <div class="row" id="fCustom"><label class="f">Ancho (mm)<input type="number" data-f="w" min="10" max="150" step="1"></label><label class="f">Alto (mm)<input type="number" data-f="h" min="6" max="150" step="1"></label></div>
         <div id="fTexto" class="mform">
           <div><div class="lbl" style="margin-top:0">Forma</div>
             <div class="seg" data-fs="forma"><button data-val="firma">Firma (sin borde)</button><button data-val="rect">Rectangular</button><button data-val="round">Redondo</button></div></div>
-          <label class="f">Tamaño del sello<select id="fSize"></select></label>
-          <div class="row" id="fCustom"><label class="f">Ancho (mm)<input type="number" data-f="w" min="10" max="150" step="1"></label><label class="f">Alto (mm)<input type="number" data-f="h" min="6" max="150" step="1"></label></div>
           <div id="fFields" class="mform"></div>
           <div class="fg" id="fSignatureSpace">
             <label class="f">Espacio para firmar <output id="fSignatureValue" for="fSignatureRange"></output>
@@ -427,6 +435,7 @@ input.inl{width:82px;min-height:40px}
             <div class="swatches" data-fs="color"><button data-val="negro" style="background:#1a1a1a" aria-label="Negro"></button><button data-val="azul" style="background:#1d3c9b" aria-label="Azul"></button><button data-val="rojo" style="background:#c62828" aria-label="Rojo"></button></div></div>
         </div>
         <div id="fImagen" class="mform" hidden>
+          <p class="hint" style="margin:0">La imagen se centra dentro del tamaño elegido y se ajusta sin deformarse.</p>
           <div class="fg"><span>Imagen del sello (foto o escaneo, PNG o JPG)</span>
             <span class="btn sm filebtn" style="justify-self:start">Subir imagen<input type="file" id="fImg" accept="image/*"></span>
             <label class="chk"><input type="checkbox" data-f="bg"> Quitar el fondo blanco</label>
@@ -479,6 +488,7 @@ let stamps=[],use=[];
 try{const d=JSON.parse(localStorage.getItem('na.sellos')||'null');if(d){stamps=d.stamps||[];use=d.use||[]}}catch(e){}
 if(!stamps.length&&!localStorage.getItem('na.sellos.v')){const s=newStamp('firma');s.ref='Ejemplo: supervisión';s.ent.t='SUPERVISIÓN DE OBRA';s.nom.t='NOMBRE APELLIDO APELLIDO';s.cip.t='00000';s.car.t='JEFE DE SUPERVISIÓN DE OBRA';stamps.push(s);use=[s.id]}
 
+let allFolios=true;
 let src=null,fname='',doc=null,pages=[],cur=0,mode='one',zoom=1,fitWidth=false,activeStamp=null,inkMap=[],inkJobs=[],manual={},renderTask=null,kc=1,flagged=null;
 
 function newStamp(forma){const p=PRESET[forma],F=k=>({t:'',font:'Arial',pt:p[k][0],b:!!p[k][1]});
@@ -537,8 +547,17 @@ function syncInputs(){
   for(const s of $$('[data-seg]'))for(const b of s.querySelectorAll('button'))b.setAttribute('aria-pressed',String(cfg[s.dataset.seg])===b.dataset.val);
   for(const r of $$('input[name=hs]'))r.checked=r.value===cfg.hs;
   $('#folBox').hidden=!foliating();$('#dinBox').hidden=cfg.sm!=='din';$('#estBox').hidden=cfg.sm!=='est';$('#analyze').hidden=!sealing()||cfg.sm!=='din';
+  $('#allFolios').checked=allFolios;$('#allFolios').disabled=!pages.length;
+  $('#allFoliosLabel').textContent=pages.length?`Todas las hojas (1 a ${pages.length})`:'Todas las hojas';
+  for(const input of $$('[data-k=a],[data-k=b]')){
+    input.disabled=allFolios||!pages.length;
+    if(pages.length){input.max=pages.length;if(allFolios)input.value=input.dataset.k==='a'?1:pages.length}
+  }
+  $('[data-k=mv]').disabled=cfg.cor[0]==='m';
+  $('#folioPositionHint').textContent=cfg.cor[0]==='m'?'A media altura solo se aplica el margen horizontal.':'';
   $('#ordHint').textContent=cfg.ord==='asc'?'La última hoja recibe el folio inicial y la numeración sube hacia la primera.':'La primera hoja recibe el folio inicial y la numeración sube hacia la última.';
 }
+$('#allFolios').onchange=e=>{allFolios=e.target.checked;changed('allFolios')};
 for(const el of $$('[data-k]'))el.addEventListener('input',()=>{const k=el.dataset.k;let v=el.type==='checkbox'?el.checked:el.value;if(NUM.has(k)){v=parseFloat(v);if(!isFinite(v))return}cfg[k]=v;
   if(k==='sD'||k==='sH')cfg.hs='rango';if(k==='sE')cfg.hs='esp';changed(k)});
 for(const s of $$('[data-seg]'))for(const b of s.querySelectorAll('button'))b.onclick=()=>{const k=s.dataset.seg;let v=b.dataset.val;if(k==='rot')v=+v;cfg[k]=v;changed(k)};
@@ -549,8 +568,8 @@ function changed(k){
 }
 function clampRange(){const n=pages.length;cfg.a=Math.min(Math.max(1,Math.round(cfg.a)||1),n);cfg.b=Math.min(Math.max(1,Math.round(cfg.b)||n),n);cfg.dig=Math.min(10,Math.max(1,Math.round(cfg.dig)||1))}
 function updateHint(){
-  if(!pages.length)return;const lo=Math.min(cfg.a,cfg.b),hi=Math.max(cfg.a,cfg.b),cnt=hi-lo+1;
-  $('#rangeHint').textContent=`El PDF tiene ${pages.length} hojas. Se foliarán ${cnt} (de la ${lo} a la ${hi}).`;
+  if(!pages.length)return;const [lo,hi]=folioRange(),cnt=hi-lo+1;
+  $('#rangeHint').textContent=`El PDF tiene ${pages.length} hojas. Se foliarán ${cnt} (de la ${lo} a la ${hi}).${allFolios?'':' Las hojas fuera del rango quedan sin folio.'}`;
   const first=foliating()?`Hoja ${lo} → ${fmt(folioNum(lo-1))}`:null;
   $('#ordHint').textContent=!first?'':lo===hi?first:`${first} · Hoja ${hi} → ${fmt(folioNum(hi-1))}`;
   const e=sealSet();$('#hsErr').hidden=!e.err;$('#hsErr').textContent=e.err||'';
@@ -558,13 +577,14 @@ function updateHint(){
 
 /* ---------- folio ---------- */
 const fmt=n=>cfg.pre+String(n).padStart(cfg.dig,'0');
-function folioNum(i){if(!foliating())return null;const p=i+1,lo=Math.min(cfg.a,cfg.b),hi=Math.max(cfg.a,cfg.b);if(p<lo||p>hi)return null;return cfg.ord==='asc'?cfg.ini+(hi-p):cfg.ini+(p-lo)}
+function folioRange(){return allFolios?[1,pages.length]:[Math.min(cfg.a,cfg.b),Math.max(cfg.a,cfg.b)]}
+function folioNum(i){if(!foliating())return null;const p=i+1,[lo,hi]=folioRange();if(p<lo||p>hi)return null;return cfg.ord==='asc'?cfg.ini+(hi-p):cfg.ini+(p-lo)}
 const mctx=document.createElement('canvas').getContext('2d');
 function textW(t,size){mctx.font='700 100px Helvetica, Arial, sans-serif';return mctx.measureText(t).width*size/100}
 function folioBox(i,wFn){
   const n=folioNum(i);if(n===null)return null;
-  const t=fmt(n),w=(wFn||textW)(t,cfg.fs),h=cfg.fs*0.72,P=pages[i],right=cfg.cor[1]==='r',top=cfg.cor[0]==='t';
-  const x=right?P.w-cfg.mh*MM-w:cfg.mh*MM,y=top?cfg.mv*MM:P.h-cfg.mv*MM-h;
+  const t=fmt(n),w=(wFn||textW)(t,cfg.fs),h=cfg.fs*0.72,P=pages[i],right=cfg.cor[1]==='r',vertical=cfg.cor[0];
+  const x=right?P.w-cfg.mh*MM-w:cfg.mh*MM,y=vertical==='m'?(P.h-h)/2:vertical==='t'?cfg.mv*MM:P.h-cfg.mv*MM-h;
   const th=cfg.rot*Math.PI/180,hx=Math.abs(Math.cos(th))*w/2+Math.abs(Math.sin(th))*h/2,hy=Math.abs(Math.sin(th))*w/2+Math.abs(Math.cos(th))*h/2;
   return {t,w,h,cx:x+w/2,cy:y+h/2,bb:[x+w/2-hx,y+h/2-hy,x+w/2+hx,y+h/2+hy]};
 }
@@ -581,7 +601,7 @@ function asset(url,whiten,rot=0){
   if(!a){assets.set(k,'l');const im=new Image();im.onload=()=>{const c=whitenC(im,rot);if(whiten){const x=c.getContext('2d'),d=x.getImageData(0,0,c.width,c.height),p=d.data;for(let i=0;i<p.length;i+=4){const l=.3*p[i]+.59*p[i+1]+.11*p[i+2];if(l>205)p[i+3]=0;else if(l>150)p[i+3]=Math.round(p[i+3]*(205-l)/55)}x.putImageData(d,0,0)}assets.set(k,c);rcache.clear();refreshAll()};im.src=url}
   return null;
 }
-function readImage(file,max=1000){return new Promise((res,rej)=>{const r=new FileReader();r.onerror=rej;r.onload=()=>{const im=new Image();im.onerror=rej;im.onload=()=>{const s=Math.min(1,max/Math.max(im.width,im.height)),c=document.createElement('canvas');c.width=Math.round(im.width*s);c.height=Math.round(im.height*s);const x=c.getContext('2d');x.fillStyle='#fff';x.fillRect(0,0,c.width,c.height);x.drawImage(im,0,0,c.width,c.height);res({url:c.toDataURL('image/jpeg',.9),w:c.width,h:c.height})};im.src=r.result};r.readAsDataURL(file)})}
+function readImage(file,max=1000,keepTransparency=false){return new Promise((res,rej)=>{const r=new FileReader();r.onerror=rej;r.onload=()=>{const im=new Image();im.onerror=rej;im.onload=()=>{const s=Math.min(1,max/Math.max(im.width,im.height)),c=document.createElement('canvas');c.width=Math.round(im.width*s);c.height=Math.round(im.height*s);const x=c.getContext('2d');if(!keepTransparency){x.fillStyle='#fff';x.fillRect(0,0,c.width,c.height)}x.drawImage(im,0,0,c.width,c.height);res({url:c.toDataURL(keepTransparency?'image/png':'image/jpeg',.9),w:c.width,h:c.height})};im.src=r.result};r.readAsDataURL(file)})}
 
 /* ---------- dibujo del sello ---------- */
 const rcache=new Map();
@@ -680,11 +700,12 @@ function syncEditor(){
   for(const el of $$('[data-f]')){const v=getP(draft,el.dataset.f);if(el.type==='checkbox')el.checked=!!v;else el.value=v??''}
   for(const g of $$('[data-fs]'))for(const b of g.querySelectorAll('button'))b.setAttribute('aria-pressed',draft[g.dataset.fs]===b.dataset.val);
   $('#fTexto').hidden=draft.modo!=='texto';$('#fImagen').hidden=draft.modo!=='imagen';$('#fFirmaDel').hidden=!draft.firma;
-  const sel=$('#fSize'),opts=SIZES[draft.forma];sel.innerHTML=opts.map(([w,h,l])=>`<option value="${w}x${h}">${l||w+' × '+h+' mm'}</option>`).join('')+'<option value="custom">Personalizado</option>';
-  const key=draft.w+'x'+draft.h;sel.value=opts.some(([w,h])=>w+'x'+h===key)?key:'custom';$('#fCustom').hidden=sel.value!=='custom'&&draft.modo==='texto';
+  const sel=$('#fSize'),opts=SIZES[draft.modo==='imagen'?'rect':draft.forma];sel.innerHTML=opts.map(([w,h,l])=>`<option value="${w}x${h}">${l||w+' × '+h+' mm'}</option>`).join('')+'<option value="custom">Personalizado</option>';
+  const key=draft.w+'x'+draft.h;sel.value=opts.some(([w,h])=>w+'x'+h===key)?key:'custom';$('#fCustom').hidden=sel.value!=='custom';
 }
 function drawPreview(){
   if(!draft)return;draft.ver++;const c=renderStamp(draft),p=$('#fPrev');p.width=c.width;p.height=c.height;p.getContext('2d').drawImage(c,0,0);
+  p.classList.toggle('image-frame',draft.modo==='imagen');
   const adjustable=draft.modo==='texto'&&draft.forma!=='round';
   $('#fSignatureSpace').hidden=!adjustable;
   if(adjustable){
@@ -693,16 +714,14 @@ function drawPreview(){
     $('#fSignatureValue').textContent=custom?range.value+' %':'Automático';
     $('#fSignatureReset').hidden=!custom;
   }
-  $('#fReal').textContent=`Tamaño real: ${Math.round(draft.w*10)/10} × ${Math.round(draft.h*10)/10} mm`+(draft.modo==='imagen'&&!draft.img?' · sube una imagen':'');
+  $('#fReal').textContent=`Tamaño real: ${Math.round(draft.w*10)/10} × ${Math.round(draft.h*10)/10} mm`+(draft.modo==='imagen'&&!draft.img?' · sube una imagen':'')+(draft.modo==='imagen'?' · la línea punteada marca el área del sello':'');
 }
 $('#fSignatureRange').oninput=e=>{draft.signatureSpace=+e.target.value;drawPreview()};
 $('#fSignatureReset').onclick=()=>{delete draft.signatureSpace;drawPreview()};
 for(const el of $$('[data-f]'))el.addEventListener('input',()=>{
   const p=el.dataset.f;let v=el.type==='checkbox'?el.checked:el.value;
   if(el.type==='number'){v=parseFloat(v);if(!isFinite(v)||v<=0)return}
-  if(draft.modo==='imagen'&&p==='w'&&draft._ar){draft.h=Math.round(v/draft._ar*10)/10}
-  if(draft.modo==='imagen'&&p==='h'&&draft._ar){draft.w=Math.round(v*draft._ar*10)/10}
-  setP(draft,p,v);if(p==='w'||p==='h'){for(const o of $$('[data-f=w],[data-f=h]'))if(o!==el)o.value=draft[o.dataset.f];const key=draft.w+'x'+draft.h;if([...$('#fSize').options].some(o=>o.value===key))$('#fSize').value=key;else $('#fSize').value='custom'}
+  setP(draft,p,v);
   drawPreview();
 });
 for(const g of $$('[data-fs]'))for(const b of g.querySelectorAll('button'))b.onclick=()=>{
@@ -715,8 +734,15 @@ $('#fFirma').onchange=async e=>{const f=e.target.files[0];e.target.value='';if(!
   const c=whitenC(await loadI(im.url),0),x=c.getContext('2d'),d=x.getImageData(0,0,c.width,c.height),p=d.data;for(let i=0;i<p.length;i+=4){const l=.3*p[i]+.59*p[i+1]+.11*p[i+2];if(l>205)p[i+3]=0;else if(l>150)p[i+3]=Math.round(p[i+3]*(205-l)/55)}x.putImageData(d,0,0);
   draft.firma=trimCanvas(c).toDataURL('image/png');syncEditor();drawPreview()}catch(err){dialog('No se pudo leer la imagen','Prueba con una foto en JPG o PNG.')}};
 $('#fFirmaDel').onclick=()=>{draft.firma=null;syncEditor();drawPreview()};
-$('#fImg').onchange=async e=>{const f=e.target.files[0];e.target.value='';if(!f)return;try{const im=await readImage(f,1400);draft.img=im.url;draft.rotImg=0;draft._ar=im.w/im.h;draft.h=Math.round(draft.w/draft._ar*10)/10;syncEditor();drawPreview()}catch(err){dialog('No se pudo leer la imagen','Prueba con una foto en JPG o PNG.')}};
-const rotImg=d=>{if(!draft.img)return;draft.rotImg=((draft.rotImg||0)+d+360)%360;const ar=draft._ar||draft.w/draft.h;draft._ar=1/ar;const w=draft.w;draft.w=draft.h;draft.h=w;syncEditor();drawPreview()};
+$('#fImg').onchange=async e=>{
+  const f=e.target.files[0],target=draft;e.target.value='';if(!f)return;
+  try{
+    const im=await readImage(f,1400,f.type==='image/png'||/\.png$/i.test(f.name));
+    if(draft!==target)return;
+    draft.img=im.url;draft.rotImg=0;drawPreview();
+  }catch(err){if(draft===target)dialog('No se pudo leer la imagen','Prueba con una foto en JPG o PNG.')}
+};
+const rotImg=d=>{if(!draft.img)return;draft.rotImg=((draft.rotImg||0)+d+360)%360;drawPreview()};
 $('#fRotL').onclick=()=>rotImg(-90);$('#fRotR').onclick=()=>rotImg(90);
 function loadI(url){return new Promise((r,j)=>{const i=new Image();i.onload=()=>r(i);i.onerror=j;i.src=url})}
 function trimCanvas(c){const x=c.getContext('2d'),d=x.getImageData(0,0,c.width,c.height).data;let x0=c.width,y0=c.height,x1=-1,y1=-1;for(let y=0;y<c.height;y++)for(let X=0;X<c.width;X++)if(d[(y*c.width+X)*4+3]>20){if(X<x0)x0=X;if(X>x1)x1=X;if(y<y0)y0=y;if(y>y1)y1=y}
@@ -819,7 +845,7 @@ async function openBytes(bytes,name){
   doc=await pdfjsLib.getDocument({data:bytes.slice(),isEvalSupported:false}).promise;
   src=bytes;fname=name;pages=[];inkMap=[];inkJobs=[];manual={};pcache.clear();flagged=null;cur=0;activeStamp=null;
   for(let i=0;i<doc.numPages;i++){const p=await doc.getPage(i+1),v=p.getViewport({scale:1});pages.push({w:v.width,h:v.height})}
-  cfg.a=1;cfg.b=pages.length;cfg.sD=1;cfg.sH=pages.length;syncInputs();
+  allFolios=true;cfg.a=1;cfg.b=pages.length;cfg.sD=1;cfg.sH=pages.length;syncInputs();
   $('#drop').hidden=true;$('#viewer').hidden=false;$('#apply').disabled=$('#analyze').disabled=false;$('#fname').textContent=name;
   $('#finfo').textContent=`${pages.length} hojas · ${[...new Set(pages.map(sizeName))].join(', ')}`;
   $('#pg').max=pages.length;$('#pg').value=1;updateHint();showReview();setMode('one');status('Listo. Revisa la vista previa y toca «Aplicar y descargar».');
@@ -854,6 +880,7 @@ async function renderPage(){
   if(!doc||mode!=='one')return;const i=cur,P=pages[i],cwE=$('#cw'),dpr=window.devicePixelRatio||1,fitH=Math.max(260,innerHeight*(innerWidth<=600?.62:.78)-34);
   const widthScale=Math.max(1,cwE.clientWidth-32)/P.w;
   kc=(fitWidth?widthScale:Math.min(widthScale,fitH/P.h))*zoom;
+  $('#zoomLevel').textContent=Math.round(kc*100)+' %';
   const pc=$('#pc'),oc=$('#oc'),cssW=P.w*kc,cssH=P.h*kc;if(renderTask){try{renderTask.cancel()}catch(e){}}
   const pg=await doc.getPage(i+1);if(i!==cur)return;const vp=pg.getViewport({scale:kc*dpr}),tmp=document.createElement('canvas');tmp.width=Math.round(vp.width);tmp.height=Math.round(vp.height);
   renderTask=pg.render({canvasContext:tmp.getContext('2d'),viewport:vp});try{await renderTask.promise}catch(e){return}if(i!==cur||mode!=='one')return;
@@ -874,7 +901,11 @@ function drawOverlay(c,i,k){
   }
 }
 function redrawPage(i){if(mode==='one'&&i===cur){drawOverlay($('#oc'),i,kc*(window.devicePixelRatio||1));note()}if(mode==='all'){const t=document.querySelector(`.th[data-i="${i}"] canvas+canvas`);if(t&&t.dataset.k)drawOverlay(t,i,+t.dataset.k)}}
-function redraw(){if(!doc)return;if(mode==='one'){drawOverlay($('#oc'),cur,kc*(window.devicePixelRatio||1));note()}else for(const t of $$('.th canvas+canvas'))if(t.dataset.k)drawOverlay(t,+t.closest('.th').dataset.i,+t.dataset.k)}
+function redraw(){if(!doc)return;if(mode==='one'){drawOverlay($('#oc'),cur,kc*(window.devicePixelRatio||1));note()}else for(const thumb of $$('.th')){
+    const i=+thumb.dataset.i,n=folioNum(i),overlay=thumb.querySelector('canvas+canvas');
+    thumb.lastElementChild.textContent=`Hoja ${i+1}`+(n===null?'':` · folio ${fmt(n)}`);
+    if(overlay.dataset.k)drawOverlay(overlay,i,+overlay.dataset.k);
+  }}
 function note(){
   const n=$('#pnote'),i=cur,fn=folioNum(i);n.textContent='';const b=document.createElement('b');b.textContent=`Hoja ${i+1}`+(fn===null?' · sin folio':` → folio ${fmt(fn)}`);n.append(b);
   const placements=placeAll(i),pl=placements||[],sp=document.createElement('span');

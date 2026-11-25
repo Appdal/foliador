@@ -108,10 +108,23 @@ input[type=number],input[type=text],select{width:100%;min-height:44px;padding:8p
 .hub{display:grid;gap:24px}
 .hub h2,.hub h3{margin:0 0 10px}
 .hub h3{scroll-margin-top:100px}
-.toolLinks{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,210px),1fr));gap:12px}
-.toolLinks button{display:grid;justify-content:stretch;align-content:center;text-align:left;gap:4px;min-height:84px;color:var(--ink);font-size:1.0625rem;font-weight:700}
-.toolLinks button:hover{border-color:var(--acc)}
-.toolLinks small{color:var(--mut);font-size:.9375rem;font-weight:400;line-height:1.45;white-space:normal}
+.hubHead{display:flex;flex-wrap:wrap;align-items:end;justify-content:space-between;gap:8px 16px}
+.hubHead p{margin:0;color:var(--mut)}
+.safe{display:inline-flex;align-items:center;gap:6px;font-size:13px;font-weight:600;color:light-dark(#0b5394,#81d4fa);background:light-dark(#e1f5fe,#0c3350);border-radius:999px;padding:6px 12px}
+.halves{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:18px;align-items:start}
+.half{display:grid;gap:10px;align-content:start;border:1px solid var(--line);border-radius:20px;padding:18px;background:var(--panel);box-shadow:0 1px 2px #0d47a10f,0 8px 24px #0d47a10d}
+.half.a{border-top:5px solid var(--blue)}
+.half.b{border-top:5px solid var(--cel)}
+.half h3{display:flex;align-items:center;gap:8px;margin:0;font-size:1.25rem;line-height:1.15}
+.half .sub{margin:-2px 0 4px;font-size:.875rem;color:var(--mut)}
+.toolLinks{display:grid;gap:10px}
+.toolLinks button{display:grid;grid-template-columns:44px minmax(0,1fr);align-items:center;column-gap:12px;row-gap:2px;width:100%;text-align:left;padding:12px 14px;min-height:72px;border:1px solid var(--line);border-radius:14px;background:var(--panel);color:var(--ink);font-size:1rem;font-weight:700;line-height:1.2;transition:border-color .15s,transform .15s,box-shadow .15s}
+.toolLinks button:hover{border-color:var(--acc);box-shadow:0 4px 14px #0d47a11a}
+.toolLinks button:active{transform:scale(.98)}
+.toolLinks .ic{grid-row:span 2;width:44px;height:44px;border-radius:12px;display:grid;place-items:center;background:light-dark(#e3eefc,#16346e);color:light-dark(#0d47a1,#bbdefb)}
+.half.b .ic{background:light-dark(#e1f5fe,#0c3a5c);color:light-dark(#0277bd,#81d4fa)}
+.toolLinks .ic svg{width:24px;height:24px}
+.toolLinks small{color:var(--mut);font-size:.8125rem;font-weight:400;line-height:1.35;white-space:normal}
 .pagePicker{display:grid;grid-template-columns:repeat(auto-fill,minmax(100px,1fr));gap:8px;max-height:360px;overflow:auto;padding:3px}
 .pagePicker button{background:var(--soft);border:1px solid var(--line);border-radius:8px;min-width:0;min-height:130px;display:grid;justify-items:center;align-content:center;gap:6px;padding:5px}
 .pagePicker button[aria-pressed=true]{border-color:var(--blue);box-shadow:inset 0 0 0 1px var(--blue);color:var(--blue);font-weight:700}
@@ -189,11 +202,23 @@ input.inl{width:82px;min-height:40px}
 @media(max-width:600px){
   .top{justify-content:center;padding-inline:16px}
   .tabs{justify-content:center;width:100%}
-  .hub{padding:24px 16px 32px;gap:22px}
-  .hub h2{font-size:1.5rem}
-  .hub h3{font-size:1.125rem}
-  .toolLinks{grid-template-columns:minmax(0,1fr);gap:10px}
-  .toolLinks button{min-height:76px;padding:12px 16px}
+  .hub{padding:16px 12px 28px;gap:12px}
+  .hub h2{font-size:1.3rem;margin-bottom:2px}
+  .hubHead p{font-size:.875rem}
+  .safe{font-size:12px;padding:5px 10px}
+  .top{padding-block:10px}
+  .brand svg{width:34px;height:34px}
+  .brand h1{font-size:20px}
+  .tabs button{min-height:38px;padding:6px 10px;font-size:14px}
+  .halves{gap:10px}
+  .half{padding:12px 10px;border-radius:16px;gap:8px}
+  .half h3{font-size:1rem}
+  .half .sub{font-size:.75rem;margin:-4px 0 2px}
+  .toolLinks{gap:8px}
+  .toolLinks button{grid-template-columns:minmax(0,1fr);justify-items:start;padding:10px;min-height:0;gap:4px;font-size:.9rem;border-radius:12px}
+  .toolLinks .ic{grid-row:auto;width:34px;height:34px;border-radius:9px;margin-bottom:2px}
+  .toolLinks .ic svg{width:21px;height:21px}
+  .toolLinks small{font-size:.75rem}
 }
 @media(prefers-reduced-motion:reduce){*{transition:none!important}}
 </style>
@@ -213,24 +238,28 @@ input.inl{width:82px;min-height:40px}
 
 <main>
 <section class="view hub" id="v-inicio">
-  <div><h2>Herramientas PDF</h2><p>Elige qué quieres hacer con tus archivos.</p></div>
-  <div>
+  <div class="hubHead"><div><h2>Herramientas PDF</h2><p>Elige qué quieres hacer con tus archivos.</p></div><span class="safe"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/></svg>Tus PDF no salen de tu equipo</span></div>
+  <div class="halves">
+  <div class="half a">
     <h3 id="folioTools" tabindex="-1">Foliar y sellar</h3>
+    <p class="sub">Para expedientes y valorizaciones</p>
     <div class="toolLinks">
-      <button class="btn" data-v="foliar">Foliar PDF<small>Numera todas las hojas o solo las de un rango.</small></button>
-      <button class="btn" data-v="sellar">Sellar PDF<small>Aplica los sellos de tu biblioteca.</small></button>
-      <button class="btn" data-v="combinar">Foliar y sellar PDF<small>Aplica folios y sellos en una sola descarga.</small></button>
+      <button type="button" data-v="foliar"><span class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M7 3h7l4 4v13a1 1 0 0 1-1 1H7a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1z"/><path d="M14 3v4h4"/><path d="M9 12h6"/><path d="M9 15h6"/><path d="M9 18h4"/></svg></span>Foliar PDF<small>Numera todas las hojas o un rango.</small></button>
+      <button type="button" data-v="sellar"><span class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9.5 3.5h5l-.6 6.5 3.6 2.5v2H6.5v-2l3.6-2.5z"/><path d="M5 18h14"/><path d="M7 21h10"/></svg></span>Sellar PDF<small>Aplica los sellos de tu biblioteca.</small></button>
+      <button type="button" data-v="combinar"><span class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M7 3h7l4 4v13a1 1 0 0 1-1 1H7a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1z"/><path d="M14 3v4h4"/><circle cx="12" cy="15" r="3"/><path d="M9 10h3"/></svg></span>Foliar y sellar<small>Folios y sellos en una sola descarga.</small></button>
     </div>
   </div>
-  <div>
+  <div class="half b">
     <h3 id="organizeTools" tabindex="-1">Organizar PDF</h3>
+    <p class="sub">Ordena, separa y gira tus archivos</p>
     <div class="toolLinks">
-      <button class="btn" data-v="unir">Unir PDF<small>Ordena varios archivos y combínalos en uno.</small></button>
-      <button class="btn" data-v="extraer">Extraer páginas<small>Guarda las hojas elegidas en un solo PDF.</small></button>
-      <button class="btn" data-v="dividir">Dividir PDF<small>Separa el archivo en partes.</small></button>
-      <button class="btn" data-v="girar">Rotar hojas<small>Corrige la orientación de páginas específicas.</small></button>
-      <button class="btn" data-v="girar-todo">Rotar todo el PDF<small>Gira todas las hojas a la vez.</small></button>
+      <button type="button" data-v="unir"><span class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="3" width="8" height="10" rx="1"/><rect x="13" y="3" width="8" height="10" rx="1"/><path d="M7 13v3a2 2 0 0 0 2 2h6a2 2 0 0 0 2-2v-3"/><path d="M12 18v3"/></svg></span>Unir PDF<small>Combina varios archivos en uno.</small></button>
+      <button type="button" data-v="extraer"><span class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M7 3h7l4 4v13a1 1 0 0 1-1 1H7a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1z"/><path d="M14 3v4h4"/><path d="M12 10v7"/><path d="M9 14l3 3 3-3"/></svg></span>Extraer páginas<small>Guarda solo las hojas que elijas.</small></button>
+      <button type="button" data-v="dividir"><span class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="4" y="3" width="16" height="7" rx="1"/><rect x="4" y="14" width="16" height="7" rx="1"/><path d="M2 12h3M8 12h3M14 12h3M20 12h2"/></svg></span>Dividir PDF<small>Separa el archivo en partes.</small></button>
+      <button type="button" data-v="girar"><span class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="8" y="8" width="9" height="12" rx="1"/><path d="M4 11a8 8 0 0 1 13-6.5"/><path d="M17 2v3h-3"/></svg></span>Rotar hojas<small>Corrige páginas específicas.</small></button>
+      <button type="button" data-v="girar-todo"><span class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="9" y="10" width="9" height="11" rx="1"/><path d="M6 17V8a1 1 0 0 1 1-1h7"/><path d="M3 9a9 9 0 0 1 15-5"/><path d="M18 1.5V4h-2.5"/></svg></span>Rotar todo<small>Gira todas las hojas a la vez.</small></button>
     </div>
+  </div>
   </div>
 </section>
 

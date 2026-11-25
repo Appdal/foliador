@@ -1,0 +1,863 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Foliador · Nara Alkatara</title>
+<meta name="description" content="Folia y sella tus PDF gratis desde el navegador. Tus archivos no salen de tu equipo.">
+<meta name="theme-color" content="#0d47a1">
+<link rel="icon" type="image/svg+xml" href="icon.svg">
+<link rel="apple-touch-icon" href="icon-192.png">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Roboto+Condensed:wght@400;700&family=Schibsted+Grotesk:wght@400;500;700;800&display=swap" rel="stylesheet">
+<style>
+/* VOICE: herramienta de oficina técnica, sobria y precisa, para expedientes de obra.
+   IDEA: la mesa de trámite: la hoja del expediente al centro, el sellador y el numerador al lado.
+   PICTURE: la propia hoja del PDF, grande, con su folio y el sello encima en vivo.
+   COLOUR and TYPE: marca Nara Alkatara: azul #0d47a1, celeste #29b6f6 y blanco. Schibsted Grotesk.
+   LAYOUT: hoja a la izquierda, controles a la derecha; en celular la hoja arriba y los controles abajo. */
+:root{color-scheme:light dark;
+--bg:light-dark(#e8f4fd,#081631);--panel:light-dark(#fff,#0f2350);--ink:light-dark(#0b1d3a,#eaf4ff);
+--mut:light-dark(#4a6280,#9fb8d6);--line:light-dark(#c9def0,#21407a);--soft:light-dark(#f2f8fe,#132c5e);
+--acc:light-dark(#0d5bd7,#4fc3f7);--accInk:light-dark(#fff,#04122b);--blue:#0d47a1;--cel:#29b6f6;--paper:#fff}
+:root[data-theme=light]{color-scheme:light}:root[data-theme=dark]{color-scheme:dark}
+*{box-sizing:border-box;min-width:0}
+body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.5 "Schibsted Grotesk",system-ui,Arial,sans-serif;overflow-x:clip}
+button,input,select{font:inherit;color:inherit}
+button{cursor:pointer}
+:focus-visible{outline:3px solid var(--acc);outline-offset:2px}
+.top{display:flex;flex-wrap:wrap;align-items:center;gap:12px 28px;padding:14px max(4vw,14px);background:var(--blue);color:#fff;border-bottom:4px solid var(--cel)}
+.brand{display:flex;align-items:center;gap:10px}
+.brand h1{font-size:24px;line-height:1.05;margin:0;font-weight:800;letter-spacing:-.01em}
+.brand small{display:block;font-size:13px;color:#cfe9fb;font-weight:400}
+.tabs{display:flex;gap:4px;flex-wrap:wrap}
+.tabs button{border:0;background:none;padding:10px 14px;min-height:44px;border-radius:8px;font-weight:500;color:#dbeefc}
+.tabs button[aria-selected=true]{background:#fff;color:var(--blue);font-weight:700}
+.tabs button:focus-visible{outline-color:var(--cel)}
+.view{padding:clamp(14px,2.5vw,28px) max(4vw,14px) 40px;max-width:1400px;margin:0 auto}
+.work{display:grid;grid-template-columns:minmax(0,1fr) 380px;gap:24px;align-items:start}
+@media(max-width:900px){.work{grid-template-columns:minmax(0,1fr)}}
+.stage{background:var(--panel);border:1px solid var(--line);border-radius:14px;overflow:hidden}
+@media(min-width:901px){.stage{position:sticky;top:14px}}
+.drop{display:grid;place-items:center;text-align:center;gap:14px;padding:48px 20px;min-height:420px;border:2px dashed var(--line);border-radius:12px;margin:14px;transition:background .15s}
+.drop.over{background:var(--soft);border-color:var(--acc)}
+.drop h2{font-size:32px;line-height:1.05;margin:0;text-wrap:balance}
+.drop p{margin:0;color:var(--mut);max-width:46ch}
+.sheetArt{width:150px;height:auto}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;min-height:44px;padding:10px 18px;border-radius:10px;border:1px solid var(--line);background:var(--panel);font-weight:500}
+.btn.main{background:var(--acc);border-color:var(--acc);color:var(--accInk);font-weight:700}
+.btn.main:disabled{opacity:.55;cursor:wait}
+.btn.sm{min-height:36px;padding:6px 12px;font-size:14px}
+.vbar{display:flex;flex-wrap:wrap;align-items:center;gap:8px 12px;padding:10px 12px;border-bottom:1px solid var(--line)}
+.vbar .fn{font-weight:700;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:100%;flex:1 1 200px}
+.vbar .fn small{display:block;font-weight:400;color:var(--mut);font-size:13px}
+.nav{display:flex;align-items:center;gap:6px}
+.nav input[type=number]{width:64px;text-align:center;padding:8px 4px}
+.ib{width:40px;height:40px;border-radius:8px;border:1px solid var(--line);background:var(--panel);display:grid;place-items:center;font-size:18px;line-height:1}
+.seg{display:inline-flex;border:1px solid var(--line);border-radius:10px;overflow:hidden;flex-wrap:wrap}
+.seg button{border:0;background:var(--panel);padding:8px 12px;min-height:40px;font-size:15px}
+.seg button+button{border-left:1px solid var(--line)}
+.seg button[aria-pressed=true]{background:var(--acc);color:var(--accInk);font-weight:700}
+.cw{position:relative;overflow:auto;background:var(--soft);max-height:78vh;padding:16px}
+.sheet{position:relative;margin:0 auto;box-shadow:0 1px 2px #0003,0 8px 24px #0002;background:var(--paper);width:max-content}
+.sheet canvas{display:block}
+.sheet canvas+canvas{position:absolute;inset:0;touch-action:none}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(130px,1fr));gap:14px;padding:16px;background:var(--soft);max-height:78vh;overflow:auto}
+.th{border:0;background:none;padding:0;text-align:center;font-size:13px;color:var(--mut)}
+.th .sheet{width:100%;min-height:150px}
+.th canvas{width:100%;height:auto}
+.th[aria-current=true] .sheet{outline:3px solid var(--acc)}
+.pnote{display:flex;flex-wrap:wrap;align-items:center;gap:8px 14px;padding:10px 14px;font-size:14px;color:var(--mut);border-top:1px solid var(--line);min-height:56px}
+.pnote b{color:var(--ink)}
+.warn{color:light-dark(#c62828,#ff8a80);font-weight:700}
+.panel{display:grid;gap:14px}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:16px}
+.card h3{font-size:17px;margin:0 0 12px;font-weight:700}
+.row{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px 12px}
+label.f{display:grid;gap:4px;font-size:14px;color:var(--mut)}
+label.f.full{grid-column:1/-1}
+input[type=number],input[type=text],select{width:100%;min-height:44px;padding:8px 10px;border:1px solid var(--line);border-radius:8px;background:var(--soft);font-size:16px;color:var(--ink)}
+.hint{font-size:13px;color:var(--mut);margin:8px 0 0}
+.lbl{font-size:14px;color:var(--mut);margin:12px 0 6px}
+.corners{display:grid;grid-template-columns:repeat(2,64px);gap:6px}
+.corners button{height:52px;border:1px solid var(--line);border-radius:8px;background:var(--soft);position:relative}
+.corners button::after{content:"";position:absolute;width:16px;height:6px;background:var(--mut);border-radius:2px}
+.corners [data-val=tl]::after{top:8px;left:8px}.corners [data-val=tr]::after{top:8px;right:8px}
+.corners [data-val=bl]::after{bottom:8px;left:8px}.corners [data-val=br]::after{bottom:8px;right:8px}
+.corners button[aria-pressed=true]{border-color:var(--acc);border-width:2px}
+.corners button[aria-pressed=true]::after{background:var(--acc)}
+.sw{display:inline-block;width:14px;height:14px;border-radius:50%;vertical-align:-2px;margin-right:6px}
+.toggle{display:flex;align-items:center;gap:10px;font-weight:700;min-height:44px}
+.toggle input{width:22px;height:22px;accent-color:var(--acc)}
+.stampPrev{display:grid;place-items:center;background:var(--paper);border:1px solid var(--line);border-radius:10px;padding:12px;margin-top:12px;min-height:120px}
+.stampPrev canvas{max-width:100%;max-height:160px;height:auto}
+.applyBar{position:sticky;bottom:0;background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:14px 16px;display:grid;gap:10px;box-shadow:0 -6px 18px #0000000f}
+.prog{height:8px;border-radius:4px;background:var(--soft);overflow:hidden}
+.prog i{display:block;height:100%;width:0;background:var(--acc);transition:width .15s}
+.status{font-size:14px;color:var(--mut);min-height:21px}
+.tool{max-width:760px;margin:0 auto;display:grid;gap:16px}
+.tool h2{font-size:32px;line-height:1.05;margin:4px 0 0;text-wrap:balance}
+.tool>p{margin:0;color:var(--mut)}
+.flist{list-style:none;margin:0;padding:0;display:grid;gap:8px}
+.flist li{display:flex;align-items:center;gap:8px;background:var(--soft);border-radius:10px;padding:8px 10px}
+.flist li span{flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.flist li small{color:var(--mut)}
+.filebtn{position:relative;overflow:hidden}
+.filebtn input{position:absolute;inset:0;opacity:0;cursor:pointer}
+[hidden]{display:none!important}
+.foot{max-width:1400px;margin:0 auto;padding:18px max(4vw,14px) 40px;font-size:13px;color:var(--mut);display:flex;flex-wrap:wrap;gap:6px 18px;border-top:1px solid var(--line)}
+.foot b{color:var(--ink)}
+.foot a{color:var(--acc)}
+.dialog{position:fixed;inset:0;background:#0007;display:grid;place-items:center;padding:16px;z-index:9}
+.dialog>div{background:var(--panel);border-radius:14px;padding:22px;max-width:420px;display:grid;gap:12px}
+.dialog h4{margin:0;font-size:20px}
+.dbtns{display:flex;gap:10px;justify-content:flex-end;flex-wrap:wrap}
+.modal{position:fixed;inset:0;background:#000a;display:grid;place-items:center;padding:12px;z-index:8}
+.mbox{background:var(--panel);border-radius:16px;width:min(940px,100%);max-height:94vh;display:grid;grid-template-rows:auto minmax(0,1fr) auto;overflow:hidden}
+.mhead,.mfoot{display:flex;align-items:center;gap:10px;padding:12px 18px}
+.mhead{border-bottom:1px solid var(--line)}.mfoot{border-top:1px solid var(--line);justify-content:flex-end}
+.mhead h4{margin:0;font-size:20px;flex:1}
+.mbody{display:grid;grid-template-columns:minmax(0,1fr) 330px;gap:18px;padding:16px 18px;overflow:auto;align-items:start}
+.mform{display:grid;gap:12px;align-content:start}
+.fg{display:grid;gap:8px;padding:12px;border:1px solid var(--line);border-radius:10px}
+.fg>span{font-size:14px;color:var(--mut)}
+.frow{display:grid;grid-template-columns:minmax(0,1fr) 70px auto auto;gap:8px;align-items:center}
+.frow .u{font-size:13px;color:var(--mut)}
+.chk{display:flex;align-items:center;gap:6px;font-size:14px;color:var(--mut)}
+.chk input{width:20px;height:20px;accent-color:var(--acc);flex:none}
+.mprev{background:var(--soft);border-radius:12px;padding:12px;display:grid;gap:8px;align-content:start;position:sticky;top:0}
+.mprev .pap{background:#fff;border-radius:8px;display:grid;place-items:center;padding:16px;min-height:160px}
+.mprev canvas{max-width:100%;max-height:240px;height:auto}
+.swatches{display:flex;gap:12px}
+.swatches button{width:42px;height:42px;border-radius:50%;border:3px solid var(--panel);box-shadow:0 0 0 1px var(--line)}
+.swatches button[aria-pressed=true]{box-shadow:0 0 0 3px var(--acc)}
+.tabs2{display:flex;border-bottom:1px solid var(--line);gap:2px;flex-wrap:wrap}
+.tabs2 button{flex:1 1 0;border:0;background:none;padding:8px 6px;min-height:44px;border-bottom:3px solid transparent;color:var(--mut);font-weight:500;line-height:1.2;text-align:center}
+.tabs2 button small{display:block;font-size:12px;font-weight:400;color:var(--mut)}
+.tabs2 button[aria-pressed=true]{border-color:var(--acc);color:var(--ink);font-weight:700}
+.lib{list-style:none;margin:12px 0 0;padding:0;display:grid;gap:10px}
+.lib li{border:1px solid var(--line);border-radius:12px;padding:10px;display:grid;gap:8px}
+.lib li.on{border-color:var(--acc);box-shadow:inset 0 0 0 1px var(--acc)}
+.lib .pv{background:#fff;border-radius:8px;display:grid;place-items:center;padding:8px;min-height:64px}
+.lib .pv canvas{max-width:100%;max-height:88px;height:auto}
+.lib .bar{display:flex;align-items:center;gap:8px}
+.lib .bar label{flex:1;display:flex;align-items:center;gap:8px;font-weight:700;overflow:hidden;min-height:40px}
+.lib .bar label span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.lib .bar input{width:22px;height:22px;accent-color:var(--acc);flex:none}
+.ord{display:inline-grid;place-items:center;min-width:26px;height:26px;border-radius:13px;background:var(--acc);color:var(--accInk);font-size:13px;font-weight:700;flex:none}
+.empty{border:1px dashed var(--line);border-radius:10px;padding:16px;color:var(--mut);font-size:14px;text-align:center}
+.estItem{display:grid;gap:8px;padding:10px 0;border-top:1px dashed var(--line)}
+.estItem b{font-size:15px}
+.estRow{display:grid;grid-template-columns:auto minmax(0,1fr) minmax(0,1fr);gap:10px;align-items:end}
+.corners.sm{grid-template-columns:repeat(2,44px);gap:4px}.corners.sm button{height:34px}
+.corners.sm button::after{width:12px;height:5px}
+.zones{list-style:none;padding:0;margin:0;display:grid;gap:10px;font-size:14px}
+.zones li{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.zk{width:14px;height:10px;border-radius:2px;display:inline-block;flex:none}
+.radios{display:grid;gap:10px}
+.radios label{display:flex;align-items:center;gap:8px;flex-wrap:wrap;font-size:15px}
+.radios input[type=radio]{width:20px;height:20px;accent-color:var(--acc);flex:none}
+input.inl{width:82px;min-height:40px}
+.review{display:grid;gap:8px;padding:10px 14px;border-top:1px solid var(--line);font-size:14px}
+.chips{display:flex;flex-wrap:wrap;gap:6px}
+.chips button{min-height:36px;padding:4px 12px;border-radius:18px;border:1px solid light-dark(#c62828,#ff8a80);background:none;color:light-dark(#c62828,#ff8a80);font-weight:700;font-size:14px}
+.ok{color:light-dark(#2e7d32,#81c784);font-weight:700}
+@media(max-width:760px){.mbody{grid-template-columns:minmax(0,1fr)}.mprev{order:-1;top:-16px;z-index:1;box-shadow:0 6px 14px #0002}.mprev .pap{min-height:110px;padding:10px}.mprev canvas{max-height:130px}}
+@media(max-width:600px){.top{gap:8px}.tabs button{padding:8px 10px;font-size:15px}.drop{min-height:320px}.drop h2{font-size:26px}.cw,.grid{max-height:62vh}.tool h2{font-size:26px}.modal{padding:0}.mbox{max-height:100vh;height:100%;border-radius:0}}
+@media(prefers-reduced-motion:reduce){*{transition:none!important}}
+</style>
+</head>
+<body>
+<header class="top">
+  <div class="brand">
+    <svg width="40" height="40" viewBox="0 0 64 64" aria-hidden="true"><rect width="64" height="64" rx="14" fill="#fff"/><rect x="4" y="4" width="56" height="56" rx="11" fill="#0d47a1"/><text x="32" y="41" text-anchor="middle" font-family="Arial Black, Arial, sans-serif" font-weight="900" font-size="27" fill="#fff" letter-spacing="-1">NA</text><rect x="14" y="47" width="36" height="5" rx="2.5" fill="#29b6f6"/></svg>
+    <div><h1>Foliador</h1><small>por Nara Alkatara · gratis e ilimitado</small></div>
+  </div>
+  <nav class="tabs" role="tablist">
+    <button role="tab" data-v="foliar" aria-selected="true">Foliar y sellar</button>
+    <button role="tab" data-v="unir" aria-selected="false">Unir</button>
+    <button role="tab" data-v="extraer" aria-selected="false">Extraer y dividir</button>
+    <button role="tab" data-v="girar" aria-selected="false">Girar</button>
+  </nav>
+</header>
+
+<main>
+<section class="view" id="v-foliar">
+  <div class="work">
+    <div class="stage">
+      <div class="drop" id="drop">
+        <svg class="sheetArt" viewBox="0 0 150 120" aria-hidden="true">
+          <rect x="34" y="6" width="82" height="108" rx="3" fill="#fff" stroke="#9fc3e3"/>
+          <g fill="#d6e6f3"><rect x="44" y="30" width="62" height="5"/><rect x="44" y="41" width="52" height="5"/><rect x="44" y="52" width="58" height="5"/><rect x="44" y="63" width="40" height="5"/></g>
+          <text x="110" y="20" font-size="10" font-weight="800" text-anchor="end" fill="#0b1d3a" font-family="Arial">000001</text>
+          <g transform="rotate(-8 88 92)"><rect x="62" y="80" width="52" height="25" rx="2" fill="none" stroke="#1d3c9b" stroke-width="2"/><rect x="72" y="88" width="32" height="3" fill="#1d3c9b"/><rect x="76" y="95" width="24" height="3" fill="#1d3c9b"/></g>
+        </svg>
+        <h2>Arrastra aquí tu PDF</h2>
+        <p>O tócalo para elegirlo. Se procesa en tu propio equipo: el archivo no se sube a ningún servidor.</p>
+        <div style="display:flex;gap:10px;flex-wrap:wrap;justify-content:center">
+          <span class="btn main filebtn">Elegir PDF<input type="file" id="fin" accept="application/pdf,.pdf"></span>
+          <button class="btn" id="demo">Probar con un PDF de ejemplo</button>
+        </div>
+      </div>
+      <div id="viewer" hidden>
+        <div class="vbar">
+          <div class="fn"><span id="fname"></span><small id="finfo"></small></div>
+          <div class="seg" id="modeSeg"><button data-m="one" aria-pressed="true">Una hoja</button><button data-m="all" aria-pressed="false">Todas</button></div>
+          <div class="nav" id="navOne">
+            <button class="ib" id="prev" aria-label="Hoja anterior">‹</button>
+            <input type="number" id="pg" min="1" value="1" aria-label="Hoja">
+            <button class="ib" id="next" aria-label="Hoja siguiente">›</button>
+            <button class="ib" id="zo" aria-label="Alejar">−</button>
+            <button class="ib" id="zi" aria-label="Acercar">+</button>
+          </div>
+          <span class="btn sm filebtn">Cambiar PDF<input type="file" id="fin2" accept="application/pdf,.pdf"></span>
+        </div>
+        <div class="cw" id="cw"><div class="sheet" id="sheet"><canvas id="pc"></canvas><canvas id="oc"></canvas></div></div>
+        <div class="grid" id="grid" hidden></div>
+        <div class="pnote" id="pnote"></div>
+        <div class="review" id="review" hidden></div>
+      </div>
+    </div>
+
+    <aside class="panel">
+      <div class="card">
+        <label class="toggle"><input type="checkbox" data-k="fol"> Foliar</label>
+        <div id="folBox">
+          <div class="row" style="margin-top:6px">
+            <label class="f">Desde la hoja N.°<input type="number" min="1" data-k="a"></label>
+            <label class="f">Hasta la hoja N.°<input type="number" min="1" data-k="b"></label>
+          </div>
+          <p class="hint" id="rangeHint">Carga un PDF para ver cuántas hojas tiene.</p>
+          <div class="row" style="margin-top:12px">
+            <label class="f">Folio inicial<input type="number" min="0" data-k="ini"></label>
+            <label class="f">Dígitos<input type="number" min="1" max="10" data-k="dig"></label>
+            <label class="f full">Texto antes del número (opcional)<input type="text" data-k="pre" placeholder="Ej.: Folio N.° "></label>
+          </div>
+          <div class="lbl">Orden</div>
+          <div class="seg" data-seg="ord"><button data-val="asc">Ascendente</button><button data-val="desc">Descendente</button></div>
+          <p class="hint" id="ordHint"></p>
+          <div style="display:flex;gap:16px;align-items:flex-start;flex-wrap:wrap;margin-top:12px">
+            <div><div class="lbl" style="margin-top:0">Esquina del folio</div>
+              <div class="corners" data-seg="cor"><button data-val="tl" aria-label="Arriba izquierda"></button><button data-val="tr" aria-label="Arriba derecha"></button><button data-val="bl" aria-label="Abajo izquierda"></button><button data-val="br" aria-label="Abajo derecha"></button></div>
+            </div>
+            <div class="row" style="flex:1 1 180px">
+              <label class="f">Margen horiz. (mm)<input type="number" min="0" step="1" data-k="mh"></label>
+              <label class="f">Margen vert. (mm)<input type="number" min="0" step="1" data-k="mv"></label>
+              <label class="f">Letra (pt)<input type="number" min="5" max="40" data-k="fs"></label>
+            </div>
+          </div>
+          <div class="lbl">Rotación del folio</div>
+          <div class="seg" data-seg="rot"><button data-val="0">0°</button><button data-val="45">45°</button><button data-val="90">90°</button><button data-val="180">180°</button><button data-val="270">270°</button><button data-val="315">315°</button></div>
+          <p class="hint">Los márgenes se miden desde el borde de cada hoja: funciona igual con A4, A3 u oficio mezcladas.</p>
+        </div>
+      </div>
+
+      <div class="card">
+        <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap"><h3 style="margin:0;flex:1">Biblioteca de sellos</h3><button class="btn sm main" id="newSt">+ Nuevo sello</button></div>
+        <p class="hint">Marca los sellos que van en cada hoja. El orden en que los marcas es el orden en que se colocan.</p>
+        <ul class="lib" id="lib"></ul>
+        <p class="hint">Los sellos quedan guardados en este navegador.</p>
+      </div>
+
+      <div class="card">
+        <h3>Sellado</h3>
+        <div class="tabs2" data-seg="sm"><button data-val="din">Dinámico<small>busca el espacio libre</small></button><button data-val="est">Estático<small>posición fija</small></button></div>
+        <div class="lbl">Hojas a sellar</div>
+        <div class="radios">
+          <label><input type="radio" name="hs" value="todas"> Todas</label>
+          <label><input type="radio" name="hs" value="rango"> Desde <input type="number" class="inl" data-k="sD" min="1" aria-label="Desde la hoja"> hasta <input type="number" class="inl" data-k="sH" min="1" aria-label="Hasta la hoja"></label>
+          <label><input type="radio" name="hs" value="esp"> Específicas</label>
+          <input type="text" data-k="sE" placeholder="Ej.: 1-3, 7, 10-12" aria-label="Hojas específicas">
+        </div>
+        <p class="hint warn" id="hsErr" hidden></p>
+        <div id="dinBox">
+          <label class="f" style="margin-top:14px">Lugar preferido<select data-k="zona"><option value="br">Abajo a la derecha</option><option value="bl">Abajo a la izquierda</option><option value="tr">Arriba a la derecha</option><option value="tl">Arriba a la izquierda</option><option value="any">Donde haya más espacio</option></select></label>
+          <div class="lbl">Zonas que ningún sello toca</div>
+          <ul class="zones">
+            <li><span class="zk" style="background:#64b5f6"></span>Folio, según su posición</li>
+            <li><label class="chk"><input type="checkbox" data-k="fr"> <span class="zk" style="background:#ffcc80"></span>Franja de archivo del borde izquierdo:</label><input type="number" class="inl" data-k="frMm" min="0" max="80" aria-label="Ancho de la franja en mm"> mm</li>
+            <li><span class="zk" style="background:#cfd8dc"></span>Margen de <input type="number" class="inl" data-k="bMm" min="0" max="40" aria-label="Margen al borde en mm"> mm al borde de la hoja</li>
+          </ul>
+          <p class="hint">En cada hoja se busca el espacio en blanco más cercano al lugar preferido, sin tapar texto, fotos, el folio ni los otros sellos. «Analizar» te marca las hojas que conviene revisar; si alguno no te convence, arrástralo.</p>
+        </div>
+        <div id="estBox" hidden>
+          <p class="hint">Cada sello va en el mismo lugar en todas las hojas. Elige la esquina y la distancia al borde, o arrástralo en la vista previa.</p>
+          <div id="estList"></div>
+        </div>
+      </div>
+
+      <div class="applyBar">
+        <div style="display:flex;gap:8px"><button class="btn" id="analyze" disabled>Analizar</button><button class="btn main" id="apply" disabled style="flex:1">Aplicar y descargar</button></div>
+        <div class="prog" hidden id="prog"><i></i></div>
+        <div class="status" id="status" aria-live="polite">Carga un PDF para empezar.</div>
+      </div>
+    </aside>
+  </div>
+</section>
+
+<section class="view" id="v-unir" hidden>
+  <div class="tool">
+    <h2>Unir varios PDF en uno</h2>
+    <p>Agrégalos en el orden que quieres y muévelos con las flechas.</p>
+    <div class="card" style="display:grid;gap:12px">
+      <span class="btn filebtn" style="justify-self:start">Agregar PDF<input type="file" id="uIn" accept="application/pdf,.pdf" multiple></span>
+      <ul class="flist" id="uList"></ul>
+      <button class="btn main" id="uGo" disabled>Unir y descargar</button>
+      <div class="status" id="uSt" aria-live="polite"></div>
+    </div>
+  </div>
+</section>
+
+<section class="view" id="v-extraer" hidden>
+  <div class="tool">
+    <h2>Extraer o dividir hojas</h2>
+    <p>Escribe las hojas separadas por comas, por ejemplo <b>1-3, 5, 8-10</b>.</p>
+    <div class="card" style="display:grid;gap:12px">
+      <span class="btn filebtn" style="justify-self:start">Elegir PDF<input type="file" id="eIn" accept="application/pdf,.pdf"></span>
+      <div class="status" id="eInfo"></div>
+      <label class="f">Hojas<input type="text" id="eR" placeholder="1-3, 5, 8-10"></label>
+      <div style="display:flex;gap:10px;flex-wrap:wrap">
+        <button class="btn main" id="eOne" disabled>Extraer en un solo PDF</button>
+        <button class="btn" id="eSplit" disabled>Dividir: un PDF por grupo (ZIP)</button>
+      </div>
+      <p class="hint">Para dividir hoja por hoja, deja la casilla vacía y usa «Dividir».</p>
+      <div class="status" id="eSt" aria-live="polite"></div>
+    </div>
+  </div>
+</section>
+
+<section class="view" id="v-girar" hidden>
+  <div class="tool">
+    <h2>Girar hojas</h2>
+    <p>Útil para planos escaneados de costado.</p>
+    <div class="card" style="display:grid;gap:12px">
+      <span class="btn filebtn" style="justify-self:start">Elegir PDF<input type="file" id="gIn" accept="application/pdf,.pdf"></span>
+      <div class="status" id="gInfo"></div>
+      <label class="f">Hojas (vacío = todas)<input type="text" id="gR" placeholder="2, 7-9"></label>
+      <div class="seg" id="gSeg"><button data-g="90" aria-pressed="true">90° derecha</button><button data-g="180" aria-pressed="false">180°</button><button data-g="270" aria-pressed="false">90° izquierda</button></div>
+      <button class="btn main" id="gGo" disabled>Girar y descargar</button>
+      <div class="status" id="gSt" aria-live="polite"></div>
+    </div>
+  </div>
+</section>
+</main>
+
+<footer class="foot"><span><b>Foliador · Nara Alkatara</b></span><span>Gratis e ilimitado.</span><span>Tus PDF se procesan en tu propio equipo y no se suben a ningún servidor.</span><span>Usa <a href="https://github.com/Hopding/pdf-lib">pdf-lib</a> (MIT), <a href="https://github.com/mozilla/pdf.js">PDF.js</a> (Apache 2.0) y <a href="https://github.com/Stuk/jszip">JSZip</a> (MIT).</span></footer>
+
+<div class="modal" id="sm" hidden>
+  <div class="mbox" role="dialog" aria-modal="true" aria-labelledby="smT">
+    <div class="mhead"><h4 id="smT">Nuevo sello</h4><button class="ib" id="smX" aria-label="Cerrar">×</button></div>
+    <div class="mbody">
+      <div class="mform">
+        <label class="f">Nombre de referencia<input type="text" data-f="ref" placeholder="Ej.: Jefe de supervisión"></label>
+        <div><div class="lbl" style="margin-top:0">¿Cómo quieres crear el sello?</div>
+          <div class="tabs2" data-fs="modo"><button data-val="texto">Con campos de texto</button><button data-val="imagen">Con mi propia imagen</button></div></div>
+        <div id="fTexto" class="mform">
+          <div><div class="lbl" style="margin-top:0">Forma</div>
+            <div class="seg" data-fs="forma"><button data-val="firma">Firma (sin borde)</button><button data-val="rect">Rectangular</button><button data-val="round">Redondo</button></div></div>
+          <label class="f">Tamaño del sello<select id="fSize"></select></label>
+          <div class="row" id="fCustom"><label class="f">Ancho (mm)<input type="number" data-f="w" min="10" max="150" step="1"></label><label class="f">Alto (mm)<input type="number" data-f="h" min="6" max="150" step="1"></label></div>
+          <div id="fFields" class="mform"></div>
+          <div class="fg"><span>Firma escaneada (opcional)</span>
+            <div style="display:flex;gap:8px;flex-wrap:wrap"><span class="btn sm filebtn">Subir firma<input type="file" id="fFirma" accept="image/*"></span><button class="btn sm" id="fFirmaDel" hidden>Quitar firma</button></div>
+            <p class="hint" style="margin:0">Foto o escaneo de tu firma en papel blanco: el fondo blanco se quita solo.</p></div>
+          <div><div class="lbl" style="margin-top:0">Color del sello</div>
+            <div class="swatches" data-fs="color"><button data-val="negro" style="background:#1a1a1a" aria-label="Negro"></button><button data-val="azul" style="background:#1d3c9b" aria-label="Azul"></button><button data-val="rojo" style="background:#c62828" aria-label="Rojo"></button></div></div>
+        </div>
+        <div id="fImagen" class="mform" hidden>
+          <div class="fg"><span>Imagen del sello (foto o escaneo, PNG o JPG)</span>
+            <span class="btn sm filebtn" style="justify-self:start">Subir imagen<input type="file" id="fImg" accept="image/*"></span>
+            <label class="chk"><input type="checkbox" data-f="bg"> Quitar el fondo blanco</label>
+            <p class="hint" style="margin:0">Si la foto salió de costado, gírala aquí:</p>
+            <div style="display:flex;gap:8px"><button class="btn sm" id="fRotL">↺ Girar</button><button class="btn sm" id="fRotR">↻ Girar</button></div></div>
+          <div class="row"><label class="f">Ancho (mm)<input type="number" data-f="w" min="10" max="150" step="1"></label><label class="f">Alto (mm)<input type="number" data-f="h" min="6" max="150" step="1"></label></div>
+          <p class="hint" style="margin:0">Al cambiar el ancho, el alto se ajusta para no deformar la imagen.</p>
+        </div>
+      </div>
+      <div class="mprev"><b>Vista previa del sello</b><div class="pap"><canvas id="fPrev"></canvas></div><span class="hint" id="fReal" style="margin:0"></span></div>
+    </div>
+    <div class="mfoot"><button class="btn" id="smCancel">Cancelar</button><button class="btn main" id="smSave">Guardar sello</button></div>
+  </div>
+</div>
+
+<div class="dialog" id="dlg" hidden><div><h4 id="dlgT"></h4><p id="dlgP" style="margin:0"></p><div class="dbtns"><button class="btn" id="dlgNo" hidden>Cancelar</button><button class="btn main" id="dlgOk">Entendido</button></div></div></div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf-lib/1.17.1/pdf-lib.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+<script>
+{
+const $=s=>document.querySelector(s), $$=s=>[...document.querySelectorAll(s)];
+const MM=72/25.4, PXMM=12, PT=PXMM*25.4/72;
+const COLORS={negro:'#1a1a1a',azul:'#1d3c9b',rojo:'#c62828'};
+const FONTS={'Arial':'Arial, Helvetica, sans-serif','Arial Narrow':'"Arial Narrow", "Roboto Condensed", Arial, sans-serif','Times New Roman':'"Times New Roman", Times, serif','Courier New':'"Courier New", Courier, monospace','Verdana':'Verdana, Geneva, sans-serif','Georgia':'Georgia, serif'};
+const FIELDS=[['ent','Empresa / institución'],['nom','Nombre'],['car','Cargo o especialidad'],['cip','N.° de colegiatura / registro (opcional)']];
+const PRESET={firma:{w:60,h:32,ent:[8,1],nom:[10,1],car:[7.5,1],cip:[8,1],color:'negro'},rect:{w:40,h:15,ent:[7,1],nom:[6,0],car:[5,0],cip:[5,0],color:'azul'},round:{w:40,h:40,ent:[8,1],nom:[8,1],car:[7,1],cip:[7,0],color:'azul'}};
+const SIZES={firma:[[50,27],[60,32,'60 × 32 mm (recomendado)'],[70,37],[80,42]],rect:[[40,15,'40 × 15 mm (estándar)'],[50,20],[60,25],[60,30],[70,35],[80,40]],round:[[30,30,'Ø 30 mm'],[35,35,'Ø 35 mm'],[40,40,'Ø 40 mm (estándar)'],[45,45,'Ø 45 mm'],[50,50,'Ø 50 mm']]};
+const libsOk=!!(window.PDFLib&&window.pdfjsLib);
+if(window.pdfjsLib) pdfjsLib.GlobalWorkerOptions.workerSrc='https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+const {PDFDocument,StandardFonts,rgb,degrees}=window.PDFLib||{};
+
+/* ---------- plan (cobro) ----------
+   Hoy todo es gratis e ilimitado. Para cobrar más adelante:
+   1) pon cobro:true y el límite gratis que quieras (hojas por PDF);
+   2) reemplaza licenciaValida() por una consulta a tu servidor o pasarela (Mercado Pago, Culqi, etc.).
+   La comprobación ya está conectada a «Aplicar y descargar» y a Unir, Extraer y Girar. */
+const PLAN={cobro:false,hojasGratis:Infinity,mensajePro:'Esta función es parte del plan Pro.'};
+function licenciaValida(){return false}
+function permitido(hojas){return !PLAN.cobro||hojas<=PLAN.hojasGratis||licenciaValida()}
+function pedirPro(){dialog('Plan Pro',PLAN.mensajePro)}
+
+/* ---------- estado ---------- */
+const DEF={fol:true,a:1,b:0,ini:1,dig:6,pre:'',ord:'asc',cor:'tr',mh:10,mv:10,fs:11,rot:0,sm:'din',hs:'todas',sD:1,sH:0,sE:'',zona:'br',fr:false,frMm:25,bMm:5};
+let cfg={...DEF};
+try{Object.assign(cfg,JSON.parse(localStorage.getItem('na.cfg')||'{}'))}catch(e){}
+let stamps=[],use=[];
+try{const d=JSON.parse(localStorage.getItem('na.sellos')||'null');if(d){stamps=d.stamps||[];use=d.use||[]}}catch(e){}
+if(!stamps.length&&!localStorage.getItem('na.sellos.v')){const s=newStamp('firma');s.ref='Ejemplo: supervisión';s.ent.t='SUPERVISIÓN DE OBRA';s.nom.t='NOMBRE APELLIDO APELLIDO';s.cip.t='00000';s.car.t='JEFE DE SUPERVISIÓN DE OBRA';stamps.push(s);use=[s.id]}
+
+let src=null,fname='',doc=null,pages=[],cur=0,mode='one',zoom=1,inkMap=[],inkJobs=[],manual={},renderTask=null,kc=1,flagged=null;
+
+function newStamp(forma){const p=PRESET[forma],F=k=>({t:'',font:'Arial',pt:p[k][0],b:!!p[k][1]});
+  return {id:'s'+Date.now().toString(36)+Math.random().toString(36).slice(2,6),ref:'',modo:'texto',forma,w:p.w,h:p.h,color:p.color,cipPre:'CIP N.°',bg:true,rotImg:0,firma:null,img:null,ent:F('ent'),nom:F('nom'),car:F('car'),cip:F('cip'),est:{cor:'br',mh:15,mv:25},ver:1}}
+function freeEst(d){const ot=usedStamps().filter(s=>s.est.cor==='br');let mv=20;for(const s of ot.sort((a,b)=>a.est.mv-b.est.mv)){if(mv+d.h+4<=s.est.mv)break;mv=Math.max(mv,s.est.mv+s.h+4)}return {cor:'br',mh:15,mv}}
+function saveCfg(){try{localStorage.setItem('na.cfg',JSON.stringify({...cfg,a:undefined,b:undefined,sD:undefined,sH:undefined}))}catch(e){}}
+function saveStamps(){try{localStorage.setItem('na.sellos',JSON.stringify({stamps,use}));localStorage.setItem('na.sellos.v','1')}catch(e){dialog('No se pudo guardar','El navegador no tiene espacio para guardar más sellos con imagen. Borra alguno que no uses.')}}
+
+let dlgRes=null;
+function dialog(t,p,ok='Entendido',no=null){$('#dlgT').textContent=t;$('#dlgP').textContent=p;$('#dlgOk').textContent=ok;$('#dlgNo').hidden=!no;if(no)$('#dlgNo').textContent=no;$('#dlg').hidden=false;$('#dlgOk').focus();return new Promise(r=>dlgRes=r)}
+$('#dlgOk').onclick=()=>{$('#dlg').hidden=true;dlgRes&&dlgRes(true)};$('#dlgNo').onclick=()=>{$('#dlg').hidden=true;dlgRes&&dlgRes(false)};
+if(!libsOk) setTimeout(()=>dialog('No cargaron las herramientas','Revisa tu conexión a internet y vuelve a abrir la página.'),300);
+
+/* ---------- pestañas ---------- */
+for(const b of $$('.tabs button')) b.onclick=()=>{for(const x of $$('.tabs button')) x.setAttribute('aria-selected',x===b);for(const v of $$('.view')) v.hidden=v.id!=='v-'+b.dataset.v};
+
+/* ---------- controles del panel ---------- */
+const NUM=new Set(['a','b','ini','dig','mh','mv','fs','sD','sH','frMm','bMm']);
+function syncInputs(){
+  for(const el of $$('[data-k]')){const k=el.dataset.k;if(el.type==='checkbox')el.checked=!!cfg[k];else el.value=cfg[k]}
+  for(const s of $$('[data-seg]'))for(const b of s.querySelectorAll('button'))b.setAttribute('aria-pressed',String(cfg[s.dataset.seg])===b.dataset.val);
+  for(const r of $$('input[name=hs]'))r.checked=r.value===cfg.hs;
+  $('#folBox').hidden=!cfg.fol;$('#dinBox').hidden=cfg.sm!=='din';$('#estBox').hidden=cfg.sm!=='est';$('#analyze').hidden=cfg.sm!=='din';
+  $('#ordHint').textContent=cfg.ord==='asc'?'La última hoja recibe el folio inicial y la numeración sube hacia la primera.':'La primera hoja recibe el folio inicial y la numeración sube hacia la última.';
+}
+for(const el of $$('[data-k]'))el.addEventListener('input',()=>{const k=el.dataset.k;let v=el.type==='checkbox'?el.checked:el.value;if(NUM.has(k)){v=parseFloat(v);if(!isFinite(v))return}cfg[k]=v;
+  if(k==='sD'||k==='sH')cfg.hs='rango';if(k==='sE')cfg.hs='esp';changed(k)});
+for(const s of $$('[data-seg]'))for(const b of s.querySelectorAll('button'))b.onclick=()=>{const k=s.dataset.seg;let v=b.dataset.val;if(k==='rot')v=+v;cfg[k]=v;changed(k)};
+for(const r of $$('input[name=hs]'))r.onchange=()=>{cfg.hs=r.value;changed('hs')};
+function changed(k){
+  if(['fol','a','b','ord','cor','mh','mv','fs','rot','ini','dig','pre'].includes(k)&&pages.length)clampRange();
+  syncInputs();saveCfg();flagged=null;showReview();if(k==='sm')renderEst();redraw();updateHint();
+}
+function clampRange(){const n=pages.length;cfg.a=Math.min(Math.max(1,Math.round(cfg.a)||1),n);cfg.b=Math.min(Math.max(1,Math.round(cfg.b)||n),n);cfg.dig=Math.min(10,Math.max(1,Math.round(cfg.dig)||1))}
+function updateHint(){
+  if(!pages.length)return;const lo=Math.min(cfg.a,cfg.b),hi=Math.max(cfg.a,cfg.b),cnt=hi-lo+1;
+  $('#rangeHint').textContent=`El PDF tiene ${pages.length} hojas. Se foliarán ${cnt} (de la ${lo} a la ${hi}), con folios del ${fmt(cfg.ini)} al ${fmt(cfg.ini+cnt-1)}.`;
+  const e=sealSet();$('#hsErr').hidden=!e.err;$('#hsErr').textContent=e.err||'';
+}
+
+/* ---------- folio ---------- */
+const fmt=n=>cfg.pre+String(n).padStart(cfg.dig,'0');
+function folioNum(i){if(!cfg.fol)return null;const p=i+1,lo=Math.min(cfg.a,cfg.b),hi=Math.max(cfg.a,cfg.b);if(p<lo||p>hi)return null;return cfg.ord==='asc'?cfg.ini+(hi-p):cfg.ini+(p-lo)}
+const mctx=document.createElement('canvas').getContext('2d');
+function textW(t,size){mctx.font='700 100px Helvetica, Arial, sans-serif';return mctx.measureText(t).width*size/100}
+function folioBox(i,wFn){
+  const n=folioNum(i);if(n===null)return null;
+  const t=fmt(n),w=(wFn||textW)(t,cfg.fs),h=cfg.fs*0.72,P=pages[i],right=cfg.cor[1]==='r',top=cfg.cor[0]==='t';
+  const x=right?P.w-cfg.mh*MM-w:cfg.mh*MM,y=top?cfg.mv*MM:P.h-cfg.mv*MM-h;
+  const th=cfg.rot*Math.PI/180,hx=Math.abs(Math.cos(th))*w/2+Math.abs(Math.sin(th))*h/2,hy=Math.abs(Math.sin(th))*w/2+Math.abs(Math.cos(th))*h/2;
+  return {t,w,h,cx:x+w/2,cy:y+h/2,bb:[x+w/2-hx,y+h/2-hy,x+w/2+hx,y+h/2+hy]};
+}
+
+/* ---------- imágenes (firmas y sellos propios) ---------- */
+const assets=new Map();
+function whitenC(im,rot){
+  const sw=rot%180?im.height:im.width,sh=rot%180?im.width:im.height,c=document.createElement('canvas');c.width=sw;c.height=sh;
+  const x=c.getContext('2d');x.translate(sw/2,sh/2);x.rotate(rot*Math.PI/180);x.drawImage(im,-im.width/2,-im.height/2);return c;
+}
+function asset(url,whiten,rot=0){
+  if(!url)return null;const k=(whiten?'w':'o')+rot+'|'+url,a=assets.get(k);
+  if(a&&a!=='l')return a;
+  if(!a){assets.set(k,'l');const im=new Image();im.onload=()=>{const c=whitenC(im,rot);if(whiten){const x=c.getContext('2d'),d=x.getImageData(0,0,c.width,c.height),p=d.data;for(let i=0;i<p.length;i+=4){const l=.3*p[i]+.59*p[i+1]+.11*p[i+2];if(l>205)p[i+3]=0;else if(l>150)p[i+3]=Math.round(p[i+3]*(205-l)/55)}x.putImageData(d,0,0)}assets.set(k,c);rcache.clear();refreshAll()};im.src=url}
+  return null;
+}
+function readImage(file,max=1000){return new Promise((res,rej)=>{const r=new FileReader();r.onerror=rej;r.onload=()=>{const im=new Image();im.onerror=rej;im.onload=()=>{const s=Math.min(1,max/Math.max(im.width,im.height)),c=document.createElement('canvas');c.width=Math.round(im.width*s);c.height=Math.round(im.height*s);const x=c.getContext('2d');x.fillStyle='#fff';x.fillRect(0,0,c.width,c.height);x.drawImage(im,0,0,c.width,c.height);res({url:c.toDataURL('image/jpeg',.9),w:c.width,h:c.height})};im.src=r.result};r.readAsDataURL(file)})}
+
+/* ---------- dibujo del sello ---------- */
+const rcache=new Map();
+function stampCanvas(s){const k=s.id+':'+s.ver;let c=rcache.get(k);if(!c){c=renderStamp(s);rcache.set(k,c)}return c}
+function wrap(x,t,maxW){const w=t.split(/\s+/).filter(Boolean),out=[];let l='';for(const p of w){const c=l?l+' '+p:p;if(x.measureText(c).width>maxW&&l){out.push(l);l=p}else l=c}if(l)out.push(l);return out}
+function arcText(x,t,cx,cy,r,top){if(!t)return;const ws=[...t].map(ch=>x.measureText(ch).width),tot=ws.reduce((a,b)=>a+b,0)/r;let a=top?-Math.PI/2-tot/2:Math.PI/2+tot/2;
+  [...t].forEach((ch,k)=>{const d=ws[k]/r;a+=top?d/2:-d/2;x.save();x.translate(cx+r*Math.cos(a),cy+r*Math.sin(a));x.rotate(top?a+Math.PI/2:a-Math.PI/2);x.fillText(ch,0,0);x.restore();a+=top?d/2:-d/2})}
+function renderStamp(s){
+  const W=Math.max(1,Math.round(s.w*PXMM)),H=Math.max(1,Math.round(s.h*PXMM)),c=document.createElement('canvas');c.width=W;c.height=H;const x=c.getContext('2d');
+  if(s.modo==='imagen'){const im=asset(s.img,s.bg,s.rotImg||0);if(im){const k=Math.min(W/im.width,H/im.height);x.drawImage(im,(W-im.width*k)/2,(H-im.height*k)/2,im.width*k,im.height*k)}return c}
+  const col=COLORS[s.color]||COLORS.negro;x.fillStyle=x.strokeStyle=col;x.textAlign='center';x.textBaseline='middle';
+  const T={ent:s.ent.t.trim(),nom:s.nom.t.trim(),car:s.car.t.trim(),cip:s.cip.t.trim()?(s.cipPre.trim()+' '+s.cip.t.trim()).trim():''};
+  const firma=asset(s.firma,false);
+  const setF=(f,k)=>{x.font=`${f.b?700:400} ${Math.max(3,f.pt*PT*k)}px ${FONTS[f.font]||FONTS.Arial}`};
+  const fit=(f,t,maxW,k)=>{setF(f,k);while(k>.25&&x.measureText(t).width>maxW){k*=.95;setF(f,k)}return k};
+  const LS='letterSpacing' in x;
+  if(s.forma==='round'){
+    const R=Math.min(W,H)/2,cx=W/2,cy=H/2,lw=Math.max(2,.4*PXMM);
+    x.lineWidth=lw;x.beginPath();x.arc(cx,cy,R-lw/2,0,7);x.stroke();x.lineWidth=lw*.5;x.beginPath();x.arc(cx,cy,R-lw*2.3,0,7);x.stroke();x.beginPath();x.arc(cx,cy,R*.63,0,7);x.stroke();
+    const top=(T.ent||T.car).toUpperCase(),fT=T.ent?s.ent:s.car,bot=T.ent?T.car.toUpperCase():'',r=R*.8;
+    let k=Math.min(1,R*.17/(fT.pt*PT));setF(fT,k);while(k>.2&&x.measureText(top).width>Math.PI*r*.9){k*=.95;setF(fT,k)}arcText(x,top,cx,cy,r,true);
+    if(bot){k=Math.min(1,R*.17/(s.car.pt*PT));setF(s.car,k);while(k>.2&&x.measureText(bot).width>Math.PI*r*.72){k*=.95;setF(s.car,k)}arcText(x,bot,cx,cy,r,false)}
+    x.font=`700 ${R*.11}px Arial`;x.fillText('★',cx-r,cy);x.fillText('★',cx+r,cy);
+    const inner=R*1.12;let kn=Math.min(1,R*.17/(s.nom.pt*PT));setF(s.nom,kn);let lines=T.nom?wrap(x,T.nom,inner):[];
+    while(kn>.25&&(lines.length>3||lines.some(l=>x.measureText(l).width>inner))){kn*=.92;setF(s.nom,kn);lines=wrap(x,T.nom,inner)}
+    const lh=s.nom.pt*PT*kn*1.12,ch=T.cip?s.cip.pt*PT*Math.min(1,R*.14/(s.cip.pt*PT))*1.15:0,tot=lines.length*lh+ch;let y=cy-tot/2+lh/2;
+    for(const l of lines){x.fillText(l,cx,y);y+=lh}
+    if(T.cip){const kc2=fit(s.cip,T.cip,inner,Math.min(1,R*.14/(s.cip.pt*PT)));setF(s.cip,kc2);x.fillText(T.cip,cx,y-lh/2+ch/2)}
+    if(firma){const kk=Math.min(R*1.2/firma.width,R*.8/firma.height);x.drawImage(firma,cx-firma.width*kk/2,cy-firma.height*kk/2,firma.width*kk,firma.height*kk)}
+    return c;
+  }
+  const rect=s.forma==='rect',pad=(rect?1.1:.4)*PXMM,maxW=W-2*pad-(rect?.4*PXMM:0);
+  if(rect){x.lineWidth=Math.max(1.5,.3*PXMM);x.strokeRect(x.lineWidth/2,x.lineWidth/2,W-x.lineWidth,H-x.lineWidth)}
+  const order=rect?['nom','car','cip']:['nom','cip','car'],lh=f=>f.pt*PT*1.18;
+  const sumT=(T.ent?lh(s.ent):0)+order.filter(k=>T[k]).reduce((a,k)=>a+lh(s[k]),0),gap=.7*PXMM,avail=H-2*pad;
+  const minZone=firma||!rect?avail*.34:1.4*PXMM;let sc=1;if(sumT+gap+minZone>avail)sc=Math.max(.3,(avail-gap-minZone)/Math.max(1,sumT));
+  const zone=Math.max(0,avail-gap-sumT*sc);let y=pad;
+  if(T.ent){const h=lh(s.ent)*sc,k=fit(s.ent,T.ent,maxW,sc);if(!rect&&LS)x.letterSpacing=(s.ent.pt*PT*k*.12)+'px';x.fillText(T.ent,W/2,y+h/2);if(LS)x.letterSpacing='0px';y+=h}
+  y+=zone;const lineY=y+gap*.35;
+  let nameW=0;if(T.nom){fit(s.nom,T.nom,maxW,sc);nameW=x.measureText(T.nom).width}
+  const lwid=Math.min(maxW,Math.max(nameW*1.05,W*(rect?.5:.6)));
+  x.save();x.lineWidth=Math.max(1,(rect?.18:.3)*PXMM);x.lineCap='round';x.setLineDash(rect?[.8*PXMM,.45*PXMM]:[.05*PXMM,.55*PXMM]);x.beginPath();x.moveTo(W/2-lwid/2,lineY);x.lineTo(W/2+lwid/2,lineY);x.stroke();x.restore();
+  y+=gap;
+  for(const k of order){if(!T[k])continue;const h=lh(s[k])*sc;fit(s[k],T[k],maxW,sc);x.fillText(T[k],W/2,y+h/2);y+=h}
+  if(firma){const zh=zone+gap+lh(s.nom)*sc*.9,zw=maxW*.8,kk=Math.min(zw/firma.width,zh/firma.height),fw=firma.width*kk,fh=firma.height*kk;x.drawImage(firma,W/2-fw/2,lineY+lh(s.nom)*sc*.55-fh,fw,fh)}
+  return c;
+}
+
+/* ---------- biblioteca ---------- */
+const byId=id=>stamps.find(s=>s.id===id);
+const usedStamps=()=>use.map(byId).filter(Boolean);
+function renderLib(){
+  const L=$('#lib');L.textContent='';
+  if(!stamps.length){const e=document.createElement('li');e.className='empty';e.textContent='Sin sellos. Usa «+ Nuevo sello» para crear uno.';L.append(e);return}
+  for(const s of stamps){
+    const li=document.createElement('li'),on=use.includes(s.id);li.className=on?'on':'';
+    const pv=document.createElement('div');pv.className='pv';const cv=document.createElement('canvas'),sc=stampCanvas(s);cv.width=sc.width;cv.height=sc.height;cv.getContext('2d').drawImage(sc,0,0);pv.append(cv);
+    const bar=document.createElement('div');bar.className='bar';const lab=document.createElement('label'),ck=document.createElement('input'),nm=document.createElement('span');
+    ck.type='checkbox';ck.checked=on;nm.textContent=s.ref||'Sin nombre';lab.append(ck,nm);
+    ck.onchange=()=>{use=ck.checked?[...use,s.id]:use.filter(i=>i!==s.id);saveStamps();flagged=null;showReview();refreshAll()};
+    bar.append(lab);
+    if(on){const o=document.createElement('span');o.className='ord';o.textContent=use.indexOf(s.id)+1;o.title='Orden';bar.append(o)}
+    const ed=document.createElement('button'),dl=document.createElement('button');ed.className=dl.className='ib';ed.textContent='✎';dl.textContent='×';ed.setAttribute('aria-label','Editar '+(s.ref||'sello'));dl.setAttribute('aria-label','Borrar '+(s.ref||'sello'));
+    ed.onclick=()=>openEditor(s);dl.onclick=async()=>{if(await dialog('¿Borrar este sello?',`Se borrará «${s.ref||'Sin nombre'}» de tu biblioteca.`,'Borrar','Cancelar')){stamps=stamps.filter(x=>x!==s);use=use.filter(i=>i!==s.id);saveStamps();refreshAll()}};
+    bar.append(ed,dl);li.append(pv,bar);L.append(li);
+  }
+}
+function renderEst(){
+  const box=$('#estList');box.textContent='';const L=usedStamps();
+  if(!L.length){const e=document.createElement('div');e.className='empty';e.textContent='Marca al menos un sello en la biblioteca.';box.append(e);return}
+  for(const s of L){
+    const it=document.createElement('div');it.className='estItem';const b=document.createElement('b');b.textContent=s.ref||'Sin nombre';
+    const row=document.createElement('div');row.className='estRow';const cs=document.createElement('div');cs.className='corners sm';
+    for(const [v,l] of [['tl','Arriba izquierda'],['tr','Arriba derecha'],['bl','Abajo izquierda'],['br','Abajo derecha']]){const bt=document.createElement('button');bt.dataset.val=v;bt.setAttribute('aria-label',l);bt.setAttribute('aria-pressed',s.est.cor===v);bt.onclick=()=>{s.est.cor=v;saveStamps();renderEst();redraw()};cs.append(bt)}
+    row.append(cs);
+    for(const [k,l] of [['mh','Horiz. (mm)'],['mv','Vert. (mm)']]){const lb=document.createElement('label');lb.className='f';lb.textContent=l;const inp=document.createElement('input');inp.type='number';inp.min=0;inp.step=1;inp.value=Math.round(s.est[k]*10)/10;inp.oninput=()=>{const v=parseFloat(inp.value);if(isFinite(v)){s.est[k]=v;saveStamps();redraw()}};lb.append(inp);row.append(lb)}
+    it.append(b,row);box.append(it);
+  }
+}
+function refreshAll(){renderLib();if(cfg.sm==='est')renderEst();redraw();if(!$('#sm').hidden)drawPreview()}
+
+/* ---------- editor de sellos ---------- */
+let draft=null,editing=null;
+const fontOpts=Object.keys(FONTS).map(f=>`<option>${f}</option>`).join('');
+$('#fFields').innerHTML=FIELDS.map(([k,l])=>`<div class="fg"><span>${l}</span>${k==='cip'?'<div class="frow" style="grid-template-columns:96px minmax(0,1fr)"><input type="text" data-f="cipPre" aria-label="Texto antes del número"><input type="text" data-f="cip.t" inputmode="numeric" aria-label="Número"></div>':`<input type="text" data-f="${k}.t" aria-label="${l}">`}<div class="frow"><select data-f="${k}.font" aria-label="Letra">${fontOpts}</select><input type="number" data-f="${k}.pt" min="3" max="40" step="0.5" aria-label="Tamaño en puntos"><span class="u">pt</span><label class="chk"><input type="checkbox" data-f="${k}.b"> Negrita</label></div></div>`).join('');
+const getP=(o,p)=>p.split('.').reduce((a,k)=>a[k],o);
+const setP=(o,p,v)=>{const ks=p.split('.'),l=ks.pop();ks.reduce((a,k)=>a[k],o)[l]=v};
+function openEditor(s){
+  editing=s||null;draft=s?JSON.parse(JSON.stringify(s)):newStamp('firma');draft.id=s?s.id:draft.id;draft.ver=(s?s.ver:0)+1000;
+  $('#smT').textContent=s?'Editar sello':'Nuevo sello';$('#sm').hidden=false;syncEditor();drawPreview();setTimeout(()=>$('[data-f=ref]').focus(),30);
+}
+function closeEditor(){$('#sm').hidden=true;draft=null}
+function syncEditor(){
+  for(const el of $$('[data-f]')){const v=getP(draft,el.dataset.f);if(el.type==='checkbox')el.checked=!!v;else el.value=v??''}
+  for(const g of $$('[data-fs]'))for(const b of g.querySelectorAll('button'))b.setAttribute('aria-pressed',draft[g.dataset.fs]===b.dataset.val);
+  $('#fTexto').hidden=draft.modo!=='texto';$('#fImagen').hidden=draft.modo!=='imagen';$('#fFirmaDel').hidden=!draft.firma;
+  const sel=$('#fSize'),opts=SIZES[draft.forma];sel.innerHTML=opts.map(([w,h,l])=>`<option value="${w}x${h}">${l||w+' × '+h+' mm'}</option>`).join('')+'<option value="custom">Personalizado</option>';
+  const key=draft.w+'x'+draft.h;sel.value=opts.some(([w,h])=>w+'x'+h===key)?key:'custom';$('#fCustom').hidden=sel.value!=='custom'&&draft.modo==='texto';
+}
+function drawPreview(){
+  if(!draft)return;draft.ver++;const c=renderStamp(draft),p=$('#fPrev');p.width=c.width;p.height=c.height;p.getContext('2d').drawImage(c,0,0);
+  $('#fReal').textContent=`Tamaño real: ${Math.round(draft.w*10)/10} × ${Math.round(draft.h*10)/10} mm`+(draft.modo==='imagen'&&!draft.img?' · sube una imagen':'');
+}
+for(const el of $$('[data-f]'))el.addEventListener('input',()=>{
+  const p=el.dataset.f;let v=el.type==='checkbox'?el.checked:el.value;
+  if(el.type==='number'){v=parseFloat(v);if(!isFinite(v)||v<=0)return}
+  if(draft.modo==='imagen'&&p==='w'&&draft._ar){draft.h=Math.round(v/draft._ar*10)/10}
+  if(draft.modo==='imagen'&&p==='h'&&draft._ar){draft.w=Math.round(v*draft._ar*10)/10}
+  setP(draft,p,v);if(p==='w'||p==='h'){for(const o of $$('[data-f=w],[data-f=h]'))if(o!==el)o.value=draft[o.dataset.f];const key=draft.w+'x'+draft.h;if([...$('#fSize').options].some(o=>o.value===key))$('#fSize').value=key;else $('#fSize').value='custom'}
+  drawPreview();
+});
+for(const g of $$('[data-fs]'))for(const b of g.querySelectorAll('button'))b.onclick=()=>{
+  const k=g.dataset.fs,v=b.dataset.val;if(draft[k]===v)return;
+  if(k==='forma'){const p=PRESET[v];draft.w=p.w;draft.h=p.h;for(const f of ['ent','nom','car','cip']){draft[f].pt=p[f][0];draft[f].b=!!p[f][1]}}
+  draft[k]=v;syncEditor();drawPreview();
+};
+$('#fSize').onchange=e=>{const v=e.target.value;$('#fCustom').hidden=v!=='custom';if(v!=='custom'){const [w,h]=v.split('x').map(Number);draft.w=w;draft.h=h;syncEditor()}drawPreview()};
+$('#fFirma').onchange=async e=>{const f=e.target.files[0];e.target.value='';if(!f)return;try{const im=await readImage(f,900);
+  const c=whitenC(await loadI(im.url),0),x=c.getContext('2d'),d=x.getImageData(0,0,c.width,c.height),p=d.data;for(let i=0;i<p.length;i+=4){const l=.3*p[i]+.59*p[i+1]+.11*p[i+2];if(l>205)p[i+3]=0;else if(l>150)p[i+3]=Math.round(p[i+3]*(205-l)/55)}x.putImageData(d,0,0);
+  draft.firma=trimCanvas(c).toDataURL('image/png');syncEditor();drawPreview()}catch(err){dialog('No se pudo leer la imagen','Prueba con una foto en JPG o PNG.')}};
+$('#fFirmaDel').onclick=()=>{draft.firma=null;syncEditor();drawPreview()};
+$('#fImg').onchange=async e=>{const f=e.target.files[0];e.target.value='';if(!f)return;try{const im=await readImage(f,1400);draft.img=im.url;draft.rotImg=0;draft._ar=im.w/im.h;draft.h=Math.round(draft.w/draft._ar*10)/10;syncEditor();drawPreview()}catch(err){dialog('No se pudo leer la imagen','Prueba con una foto en JPG o PNG.')}};
+const rotImg=d=>{if(!draft.img)return;draft.rotImg=((draft.rotImg||0)+d+360)%360;const ar=draft._ar||draft.w/draft.h;draft._ar=1/ar;const w=draft.w;draft.w=draft.h;draft.h=w;syncEditor();drawPreview()};
+$('#fRotL').onclick=()=>rotImg(-90);$('#fRotR').onclick=()=>rotImg(90);
+function loadI(url){return new Promise((r,j)=>{const i=new Image();i.onload=()=>r(i);i.onerror=j;i.src=url})}
+function trimCanvas(c){const x=c.getContext('2d'),d=x.getImageData(0,0,c.width,c.height).data;let x0=c.width,y0=c.height,x1=-1,y1=-1;for(let y=0;y<c.height;y++)for(let X=0;X<c.width;X++)if(d[(y*c.width+X)*4+3]>20){if(X<x0)x0=X;if(X>x1)x1=X;if(y<y0)y0=y;if(y>y1)y1=y}
+  if(x1<0)return c;const o=document.createElement('canvas');o.width=x1-x0+1;o.height=y1-y0+1;o.getContext('2d').drawImage(c,-x0,-y0);return o}
+$('#smX').onclick=closeEditor;$('#smCancel').onclick=closeEditor;
+$('#sm').addEventListener('keydown',e=>{if(e.key==='Escape')closeEditor()});
+$('#smSave').onclick=()=>{
+  const d=draft;
+  if(d.modo==='imagen'&&!d.img){dialog('Falta la imagen','Sube la imagen del sello o cambia a «Con campos de texto».');return}
+  if(d.modo==='texto'&&!['ent','nom','car','cip'].some(k=>d[k].t.trim())&&!d.firma){dialog('El sello está vacío','Escribe al menos el nombre o la empresa.');return}
+  if(!d.ref.trim())d.ref=(d.modo==='texto'&&(d.nom.t.trim()||d.ent.t.trim()))||'Sello '+(stamps.length+1);
+  delete d._ar;d.ver=(editing?editing.ver:0)+1;
+  if(editing){Object.assign(editing,d);for(const p in manual)if(manual[p])delete manual[p][d.id]}else{d.est=freeEst(d);stamps.push(d);use.push(d.id)}
+  saveStamps();closeEditor();flagged=null;showReview();refreshAll();
+};
+$('#newSt').onclick=()=>openEditor(null);
+
+/* ---------- hojas a sellar ---------- */
+let sealCache={k:'',v:null};
+function sealSet(){
+  const n=pages.length,k=[cfg.hs,cfg.sD,cfg.sH,cfg.sE,n].join('|');if(sealCache.k===k)return sealCache.v;let v={all:true};
+  if(cfg.hs==='rango'){const a=Math.max(1,Math.min(cfg.sD,cfg.sH||n)),b=Math.min(n||1e9,Math.max(cfg.sD,cfg.sH||n));v={lo:a,hi:b}}
+  else if(cfg.hs==='esp'){try{const set=new Set();for(const [a,b] of parseRanges(cfg.sE||'',n||1e9))for(let p=a;p<=b;p++)set.add(p);v={set};if(!set.size)v.err='Escribe qué hojas quieres sellar.'}catch(e){v={set:new Set(),err:e.message}}}
+  sealCache={k,v};return v;
+}
+function sealPage(i){if(!usedStamps().length)return false;const v=sealSet();if(v.all)return true;if(v.set)return v.set.has(i+1);return i+1>=v.lo&&i+1<=v.hi}
+
+/* ---------- búsqueda de espacio libre ---------- */
+const INKSC=0.25;
+function ensureInk(i){
+  if(inkMap[i])return Promise.resolve(inkMap[i]);if(inkJobs[i])return inkJobs[i];
+  return inkJobs[i]=(async()=>{const pg=await doc.getPage(i+1),vp=pg.getViewport({scale:INKSC}),c=document.createElement('canvas');c.width=Math.ceil(vp.width);c.height=Math.ceil(vp.height);
+    const x=c.getContext('2d',{willReadFrequently:true});x.fillStyle='#fff';x.fillRect(0,0,c.width,c.height);await pg.render({canvasContext:x,viewport:vp}).promise;
+    const d=x.getImageData(0,0,c.width,c.height).data,m=new Uint8Array(c.width*c.height);for(let k=0,j=0;k<m.length;k++,j+=4)m[k]=(.3*d[j]+.59*d[j+1]+.11*d[j+2])<240?1:0;
+    pg.cleanup();c.width=c.height=0;return inkMap[i]={w:m.length/Math.ceil(vp.height),h:Math.ceil(vp.height),m}})();
+}
+const pcache=new Map();
+function placeAll(i){
+  if(!sealPage(i))return [];const L=usedStamps(),P=pages[i],Wm=P.w/MM,Hm=P.h/MM,cl=(v,a,b)=>Math.max(a,Math.min(b,v));
+  if(cfg.sm==='est')return L.map(s=>{const e=s.est,x=e.cor[1]==='r'?Wm-e.mh-s.w:e.mh,y=e.cor[0]==='b'?Hm-e.mv-s.h:e.mv;return {s,x:cl(x,0,Math.max(0,Wm-s.w)),y:cl(y,0,Math.max(0,Hm-s.h)),f:0,est:true}});
+  const bm=inkMap[i];if(!bm)return null;
+  const fb=folioBox(i),key=[i,cfg.zona,cfg.fr,cfg.frMm,cfg.bMm,fb&&fb.bb.map(v=>v|0).join(),L.map(s=>s.id+s.w+'x'+s.h).join(),JSON.stringify(manual[i]||{})].join('|');
+  if(pcache.has(key))return pcache.get(key);
+  const W=bm.w,H=bm.h,s=bm.w/P.w,k=s*MM,m=bm.m.slice();
+  const excl=(x,y,w,h)=>{const x0=Math.max(0,Math.floor(x*k)),y0=Math.max(0,Math.floor(y*k)),x1=Math.min(W,Math.ceil((x+w)*k)),y1=Math.min(H,Math.ceil((y+h)*k));for(let yy=y0;yy<y1;yy++)m.fill(1,yy*W+x0,yy*W+x1)};
+  if(fb){const p=3;excl(fb.bb[0]/MM-p,fb.bb[1]/MM-p,(fb.bb[2]-fb.bb[0])/MM+2*p,(fb.bb[3]-fb.bb[1])/MM+2*p)}
+  if(cfg.fr&&cfg.frMm>0)excl(0,0,cfg.frMm,Hm);
+  const out=[],I=new Int32Array((W+1)*(H+1)),diag=Math.hypot(W,H);
+  for(const st of L){
+    const man=manual[i]&&manual[i][st.id];let r;
+    if(man)r={s:st,x:man.x,y:man.y,f:0,man:true};
+    else{
+      for(let y=0;y<H;y++){let row=0;for(let x=0;x<W;x++){row+=m[y*W+x];I[(y+1)*(W+1)+x+1]=I[y*(W+1)+x+1]+row}}
+      const sw=Math.min(W-1,Math.ceil(st.w*k)),sh=Math.min(H-1,Math.ceil(st.h*k)),bg=Math.round(Math.max(0,cfg.bMm)*k);
+      const x0=Math.min(bg,W-sw),y0=Math.min(bg,H-sh),x1=Math.max(x0,W-sw-bg),y1=Math.max(y0,H-sh-bg);
+      const tx=cfg.zona==='any'?null:(cfg.zona[1]==='r'?x1:x0),ty=cfg.zona==='any'?null:(cfg.zona[0]==='b'?y1:y0),A=sw*sh;let best=null;
+      for(let y=y0;y<=y1;y+=2)for(let x=x0;x<=x1;x+=2){const c=I[(y+sh)*(W+1)+x+sw]-I[y*(W+1)+x+sw]-I[(y+sh)*(W+1)+x]+I[y*(W+1)+x],f=c/A,sc=f+(tx===null?0:.05*Math.hypot(x-tx,y-ty)/diag);if(!best||sc<best.sc)best={sc,f,x,y}}
+      r={s:st,x:best.x/k,y:best.y/k,f:best.f};
+    }
+    out.push(r);excl(r.x-2,r.y-2,st.w+4,st.h+4);
+  }
+  if(pcache.size>3000)pcache.clear();pcache.set(key,out);return out;
+}
+
+/* ---------- carga ---------- */
+async function loadFile(f){
+  if(!f)return;if(!/\.pdf$/i.test(f.name)&&f.type!=='application/pdf'){dialog('Ese archivo no es PDF','Elige un archivo con extensión .pdf.');return}
+  status('Abriendo '+f.name+'…');
+  try{await openBytes(new Uint8Array(await f.arrayBuffer()),f.name)}catch(e){console.error(e);dialog('No se pudo abrir el PDF',e&&e.name==='PasswordException'?'El PDF tiene contraseña. Quítasela y vuelve a intentarlo.':'El archivo parece dañado o no es un PDF válido.');status('Carga un PDF para empezar.')}
+}
+async function openBytes(bytes,name){
+  if(doc){try{doc.destroy()}catch(e){}}
+  doc=await pdfjsLib.getDocument({data:bytes.slice(),isEvalSupported:false}).promise;
+  src=bytes;fname=name;pages=[];inkMap=[];inkJobs=[];manual={};pcache.clear();flagged=null;cur=0;
+  for(let i=0;i<doc.numPages;i++){const p=await doc.getPage(i+1),v=p.getViewport({scale:1});pages.push({w:v.width,h:v.height})}
+  cfg.a=1;cfg.b=pages.length;cfg.sD=1;cfg.sH=pages.length;syncInputs();
+  $('#drop').hidden=true;$('#viewer').hidden=false;$('#apply').disabled=$('#analyze').disabled=false;$('#fname').textContent=name;
+  $('#finfo').textContent=`${pages.length} hojas · ${[...new Set(pages.map(sizeName))].join(', ')}`;
+  $('#pg').max=pages.length;$('#pg').value=1;updateHint();showReview();setMode('one');status('Listo. Revisa la vista previa y toca «Aplicar y descargar».');
+}
+function sizeName(p){const a=Math.round(Math.min(p.w,p.h)/MM),b=Math.round(Math.max(p.w,p.h)/MM),n=(x,y)=>Math.abs(a-x)<4&&Math.abs(b-y)<4;return n(210,297)?'A4':n(297,420)?'A3':n(420,594)?'A2':n(594,841)?'A1':n(216,279)?'Carta':n(216,330)||n(216,356)?'Oficio':a+'×'+b+' mm'}
+$('#fin').onchange=e=>{loadFile(e.target.files[0]);e.target.value=''};$('#fin2').onchange=e=>{loadFile(e.target.files[0]);e.target.value=''};
+const dz=$('#drop');dz.addEventListener('dragover',e=>{e.preventDefault();dz.classList.add('over')});dz.addEventListener('dragleave',()=>dz.classList.remove('over'));
+dz.addEventListener('drop',e=>{e.preventDefault();dz.classList.remove('over');loadFile(e.dataTransfer.files[0])});
+$('#demo').onclick=async()=>{try{await openBytes(await demoPdf(),'ejemplo-valorizacion.pdf')}catch(e){console.error(e);dialog('No se pudo crear el ejemplo','Recarga la página e inténtalo otra vez.')}};
+async function demoPdf(){
+  const d=await PDFDocument.create(),f=await d.embedFont(StandardFonts.Helvetica),fb=await d.embedFont(StandardFonts.HelveticaBold),g=rgb(.55,.55,.55);
+  ['VALORIZACIÓN N.° 07','RESUMEN DE VALORIZACIÓN','CUADERNO DE OBRA – COPIA','PROTOCOLO DE CALIDAD','PANEL FOTOGRÁFICO','PLANO DE UBICACIÓN'].forEach((t,k)=>{
+    const a3=k===5,[W,H]=a3?[1190.55,841.89]:[595.28,841.89],p=d.addPage([W,H]);p.drawText('PDF DE EJEMPLO',{x:40,y:H-40,size:8,font:f,color:g});p.drawText(t,{x:60,y:H-110,size:k?16:26,font:fb});
+    if(k===0){p.drawText('Periodo: octubre 2026',{x:60,y:H-140,size:12,font:f});p.drawRectangle({x:60,y:H-420,width:W-120,height:240,borderColor:rgb(.2,.2,.2),borderWidth:1})}
+    else if(a3){p.drawRectangle({x:40,y:40,width:W-80,height:H-80,borderColor:rgb(0,0,0),borderWidth:2});p.drawRectangle({x:W-360,y:40,width:320,height:120,borderColor:rgb(0,0,0),borderWidth:1});for(let r=0;r<8;r++)p.drawRectangle({x:120+r*110,y:300,width:80,height:300,borderColor:rgb(.3,.3,.3),borderWidth:1})}
+    else for(let r=0;r<(k===4?6:22);r++){if(k===4)p.drawRectangle({x:60+(r%2)*245,y:H-380-Math.floor(r/2)*200,width:230,height:180,color:rgb(.85,.85,.85)});else p.drawText('Texto de ejemplo para la hoja del expediente, línea '+(r+1)+'.',{x:60,y:H-160-r*22,size:10,font:f})}
+  });
+  return d.save();
+}
+
+/* ---------- vista previa ---------- */
+function setMode(m){mode=m;for(const b of $$('#modeSeg button'))b.setAttribute('aria-pressed',b.dataset.m===m);$('#cw').hidden=m!=='one';$('#navOne').style.visibility=m==='one'?'visible':'hidden';$('#grid').hidden=m!=='all';if(m==='all')buildGrid();else renderPage()}
+for(const b of $$('#modeSeg button'))b.onclick=()=>setMode(b.dataset.m);
+function go(i){cur=Math.max(0,Math.min(pages.length-1,i));$('#pg').value=cur+1;if(mode!=='one')setMode('one');else renderPage()}
+$('#prev').onclick=()=>go(cur-1);$('#next').onclick=()=>go(cur+1);$('#pg').onchange=e=>go((+e.target.value||1)-1);
+$('#zi').onclick=()=>{zoom=Math.min(3,zoom*1.25);renderPage()};$('#zo').onclick=()=>{zoom=Math.max(.5,zoom/1.25);renderPage()};
+document.addEventListener('keydown',e=>{if(mode!=='one'||!pages.length||!$('#sm').hidden||/INPUT|SELECT|TEXTAREA/.test(document.activeElement.tagName))return;if(e.key==='ArrowRight')go(cur+1);if(e.key==='ArrowLeft')go(cur-1)});
+async function renderPage(){
+  if(!doc||mode!=='one')return;const i=cur,P=pages[i],cwE=$('#cw'),dpr=window.devicePixelRatio||1,fitH=Math.max(260,innerHeight*(innerWidth<=600?.62:.78)-34);
+  kc=Math.min(Math.max(200,cwE.clientWidth-32)/P.w,fitH/P.h)*zoom;
+  const pc=$('#pc'),oc=$('#oc'),cssW=P.w*kc,cssH=P.h*kc;if(renderTask){try{renderTask.cancel()}catch(e){}}
+  const pg=await doc.getPage(i+1);if(i!==cur)return;const vp=pg.getViewport({scale:kc*dpr}),tmp=document.createElement('canvas');tmp.width=Math.round(vp.width);tmp.height=Math.round(vp.height);
+  renderTask=pg.render({canvasContext:tmp.getContext('2d'),viewport:vp});try{await renderTask.promise}catch(e){return}if(i!==cur)return;
+  pc.width=oc.width=tmp.width;pc.height=oc.height=tmp.height;for(const c of [pc,oc]){c.style.width=cssW+'px';c.style.height=cssH+'px'}pc.getContext('2d').drawImage(tmp,0,0);
+  drawOverlay(oc,i,kc*dpr);note();
+}
+function drawOverlay(c,i,k){
+  const x=c.getContext('2d');x.clearRect(0,0,c.width,c.height);const fb=folioBox(i);
+  if(fb){x.save();x.translate(fb.cx*k,fb.cy*k);x.rotate(cfg.rot*Math.PI/180);x.fillStyle='#111';x.font=`700 ${cfg.fs*k}px Helvetica, Arial, sans-serif`;x.textBaseline='alphabetic';x.fillText(fb.t,-fb.w/2*k,fb.h/2*k);x.restore()}
+  const pl=placeAll(i);if(pl===null){ensureInk(i).then(()=>redrawPage(i));return}
+  if(cfg.sm==='din'&&cfg.fr&&cfg.frMm>0&&pl.length){x.fillStyle='rgba(255,183,77,.13)';x.fillRect(0,0,cfg.frMm*MM*k,c.height)}
+  for(const p of pl){const s=p.s;x.drawImage(stampCanvas(s),p.x*MM*k,p.y*MM*k,s.w*MM*k,s.h*MM*k);
+    if(p.man||p.f>0.04){x.setLineDash([6,4]);x.lineWidth=Math.max(1,k*.8);x.strokeStyle=p.man?'#0d5bd7':'#e53935';x.strokeRect(p.x*MM*k,p.y*MM*k,s.w*MM*k,s.h*MM*k);x.setLineDash([])}}
+}
+function redrawPage(i){if(mode==='one'&&i===cur){drawOverlay($('#oc'),i,kc*(window.devicePixelRatio||1));note()}if(mode==='all'){const t=document.querySelector(`.th[data-i="${i}"] canvas+canvas`);if(t&&t.dataset.k)drawOverlay(t,i,+t.dataset.k)}}
+function redraw(){if(!doc)return;if(mode==='one'){drawOverlay($('#oc'),cur,kc*(window.devicePixelRatio||1));note()}else for(const t of $$('.th canvas+canvas'))if(t.dataset.k)drawOverlay(t,+t.closest('.th').dataset.i,+t.dataset.k)}
+function note(){
+  const n=$('#pnote'),i=cur,fn=folioNum(i);n.textContent='';const b=document.createElement('b');b.textContent=`Hoja ${i+1}`+(fn===null?' · sin folio':` → folio ${fmt(fn)}`);n.append(b);
+  const pl=placeAll(i)||[],sp=document.createElement('span');
+  if(!pl.length)sp.textContent=usedStamps().length?'Esta hoja no se sella.':'Sin sellos marcados.';
+  else if(pl.some(p=>p.f>0.04&&!p.man)){sp.className='warn';sp.textContent='Un sello toca contenido en esta hoja: arrástralo o achícalo.'}
+  else if(pl.some((a,j)=>pl.some((b,q)=>q>j&&a.x<b.x+b.s.w&&b.x<a.x+a.s.w&&a.y<b.y+b.s.h&&b.y<a.y+a.s.h))){sp.className='warn';sp.textContent='Dos sellos se superponen: cambia su posición o arrastra uno.'}
+  else sp.textContent=cfg.sm==='est'?'Arrastra un sello para cambiar su posición en todas las hojas.':'Arrastra un sello para moverlo solo en esta hoja.';
+  n.append(sp);
+  if(pl.some(p=>p.man)){const r=document.createElement('button');r.className='btn sm';r.textContent='Volver a automático';r.onclick=()=>{delete manual[i];redraw()};n.append(r)}
+}
+let drag=null;const oc=$('#oc');
+const ptr=e=>{const r=oc.getBoundingClientRect();return [(e.clientX-r.left)/kc/MM,(e.clientY-r.top)/kc/MM]};
+function hit(px,py){const pl=placeAll(cur)||[];for(let j=pl.length-1;j>=0;j--){const p=pl[j];if(px>=p.x&&px<=p.x+p.s.w&&py>=p.y&&py<=p.y+p.s.h)return p}return null}
+oc.addEventListener('pointerdown',e=>{const [px,py]=ptr(e),p=hit(px,py);if(!p)return;drag={p,dx:px-p.x,dy:py-p.y};oc.setPointerCapture(e.pointerId);e.preventDefault()});
+oc.addEventListener('pointermove',e=>{const [px,py]=ptr(e);if(!drag){oc.style.cursor=hit(px,py)?'grab':'default';return}
+  const P=pages[cur],s=drag.p.s,Wm=P.w/MM,Hm=P.h/MM,x=Math.max(0,Math.min(Wm-s.w,px-drag.dx)),y=Math.max(0,Math.min(Hm-s.h,py-drag.dy));
+  if(cfg.sm==='est'){const e2=s.est;e2.mh=Math.round((e2.cor[1]==='r'?Wm-x-s.w:x)*2)/2;e2.mv=Math.round((e2.cor[0]==='b'?Hm-y-s.h:y)*2)/2}
+  else{(manual[cur]=manual[cur]||{})[s.id]={x,y}}
+  drawOverlay(oc,cur,kc*(window.devicePixelRatio||1));
+});
+const endDrag=()=>{if(!drag)return;drag=null;if(cfg.sm==='est'){saveStamps();renderEst()}else{flagged=flagged&&flagged.filter(i=>i!==cur);showReview()}note()};
+oc.addEventListener('pointerup',endDrag);oc.addEventListener('pointercancel',endDrag);
+let rsT;new ResizeObserver(()=>{clearTimeout(rsT);rsT=setTimeout(()=>{if(mode==='one')renderPage()},150)}).observe($('#cw'));
+let io=null;
+function buildGrid(){
+  const g=$('#grid');g.textContent='';if(io)io.disconnect();io=new IntersectionObserver(es=>{for(const e of es)if(e.isIntersecting){io.unobserve(e.target);thumb(e.target)}},{root:g,rootMargin:'300px'});
+  pages.forEach((P,i)=>{const b=document.createElement('button');b.className='th';b.dataset.i=i;b.setAttribute('aria-current',i===cur);const sh=document.createElement('div');sh.className='sheet';sh.style.aspectRatio=P.w+'/'+P.h;sh.style.minHeight='0';
+    sh.append(document.createElement('canvas'),document.createElement('canvas'));const lab=document.createElement('div'),fn=folioNum(i);lab.textContent=`Hoja ${i+1}`+(fn===null?'':` · folio ${fmt(fn)}`);b.append(sh,lab);b.onclick=()=>go(i);g.append(b);io.observe(b)});
+}
+async function thumb(b){const i=+b.dataset.i,P=pages[i],dpr=window.devicePixelRatio||1,k=(b.clientWidth||130)/P.w*dpr,pg=await doc.getPage(i+1),vp=pg.getViewport({scale:k}),[c,o]=b.querySelectorAll('canvas');
+  c.width=o.width=Math.round(vp.width);c.height=o.height=Math.round(vp.height);await pg.render({canvasContext:c.getContext('2d'),viewport:vp}).promise;pg.cleanup();o.dataset.k=k;drawOverlay(o,i,k)}
+
+/* ---------- analizar y aplicar ---------- */
+function status(t){$('#status').textContent=t}
+function prog(f){const p=$('#prog');p.hidden=f===null;if(f!==null)p.firstElementChild.style.width=(f*100).toFixed(1)+'%'}
+const tick=()=>new Promise(r=>setTimeout(r,0));
+async function analyzeAll(to=1){
+  const tg=cfg.sm==='din'?pages.map((_,i)=>i).filter(sealPage):[];
+  for(let k=0;k<tg.length;k++){await ensureInk(tg[k]);if(k%3===0){status(`Buscando espacio libre… hoja ${k+1} de ${tg.length}`);prog(to*k/tg.length);await tick()}}
+  flagged=tg.filter(i=>(placeAll(i)||[]).some(p=>p.f>0.04&&!p.man));showReview();return tg.length;
+}
+function showReview(){
+  const r=$('#review');r.textContent='';if(!flagged||!pages.length){r.hidden=true;return}r.hidden=false;
+  if(!flagged.length){const s=document.createElement('span');s.className='ok';s.textContent='Todo bien: en todas las hojas los sellos cayeron en espacio libre.';r.append(s);return}
+  const t=document.createElement('span');t.className='warn';t.textContent=`Revisa ${flagged.length===1?'esta hoja':'estas '+flagged.length+' hojas'}: los sellos tocan algo de contenido.`;
+  const ch=document.createElement('div');ch.className='chips';for(const i of flagged.slice(0,80)){const b=document.createElement('button');b.textContent='Hoja '+(i+1);b.onclick=()=>go(i);ch.append(b)}
+  if(flagged.length>80){const m=document.createElement('span');m.textContent=`y ${flagged.length-80} más`;ch.append(m)}r.append(t,ch);
+}
+$('#analyze').onclick=async()=>{const b=$('#analyze');if(!usedStamps().length){dialog('No hay sellos marcados','Marca al menos un sello en la biblioteca.');return}if(sealSet().err){dialog('Revisa las hojas a sellar',sealSet().err);return}
+  b.disabled=true;prog(0);try{const n=await analyzeAll();status(`Analizadas ${n} hojas.`+(flagged.length?` ${flagged.length} para revisar.`:''));redraw()}catch(e){console.error(e);status('No se pudo analizar.')}b.disabled=false;setTimeout(()=>prog(null),800)};
+function wrapPage(pd,page){const c=pd.context,a=c.register(c.stream('q')),b=c.register(c.stream('Q'));page.node.wrapContentStreams(a,b)}
+function mapper(page){const cb=page.getCropBox(),r=((page.getRotation().angle%360)+360)%360,W=cb.width,H=cb.height,Vh=r%180?W:H;
+  return {r,Vh,m:(X,Y)=>{const vx=X,vy=Vh-Y;let px,py;if(r===90){px=vy;py=vx}else if(r===180){px=W-vx;py=vy}else if(r===270){px=W-vy;py=H-vx}else{px=vx;py=H-vy}return [px+cb.x,py+cb.y]}}}
+async function pngOf(s){const c=stampCanvas(s),bl=await new Promise(r=>c.toBlob(r,'image/png'));return new Uint8Array(await bl.arrayBuffer())}
+$('#apply').onclick=async()=>{
+  if(!permitido(pages.length)){pedirPro();return}
+  if(usedStamps().length&&sealSet().err){dialog('Revisa las hojas a sellar',sealSet().err);return}
+  if(!cfg.fol&&!usedStamps().length){dialog('No hay nada que aplicar','Activa «Foliar» o marca al menos un sello.');return}
+  const btn=$('#apply');btn.disabled=true;prog(0);
+  try{
+    await analyzeAll(.6);status('Preparando el PDF…');await tick();
+    const pd=await PDFDocument.load(src,{ignoreEncryption:true}),font=await pd.embedFont(StandardFonts.HelveticaBold),imgs={};
+    for(const s of usedStamps())imgs[s.id]=await pd.embedPng(await pngOf(s));
+    const pl=pd.getPages(),wFn=(t,sz)=>font.widthOfTextAtSize(t,sz);
+    for(let i=0;i<pl.length;i++){
+      const fb=folioBox(i,wFn),pls=placeAll(i)||[];if(!fb&&!pls.length)continue;const page=pl[i],M=mapper(page);wrapPage(pd,page);
+      if(fb){const th=-cfg.rot*Math.PI/180,cy=M.Vh-fb.cy,bx=fb.cx+Math.cos(th)*(-fb.w/2)-Math.sin(th)*(-fb.h/2),by=cy+Math.sin(th)*(-fb.w/2)+Math.cos(th)*(-fb.h/2),[X,Y]=M.m(bx,by);
+        page.drawText(fb.t,{x:X,y:Y,size:cfg.fs,font,color:rgb(.07,.07,.07),rotate:degrees(M.r-cfg.rot)})}
+      for(const p of pls){const [X,Y]=M.m(p.x*MM,M.Vh-(p.y+p.s.h)*MM);page.drawImage(imgs[p.s.id],{x:X,y:Y,width:p.s.w*MM,height:p.s.h*MM,rotate:degrees(M.r)})}
+      if(i%10===0){status(`Aplicando en la hoja ${i+1} de ${pl.length}…`);prog(.6+.3*i/pl.length);await tick()}
+    }
+    status('Guardando…');prog(.95);await tick();
+    const out=await pd.save(),name=fname.replace(/\.pdf$/i,'')+(cfg.fol?'_foliado':'_sellado')+'.pdf';prog(1);
+    const r=await saveFile(out,name);status(r+(flagged&&flagged.length?` Ojo: en ${flagged.length} hoja(s) un sello toca contenido; están en la lista para revisar.`:''));
+  }catch(e){console.error(e);dialog('No se pudo completar','Ocurrió un error al procesar el PDF. Si tiene contraseña o está dañado, prueba con otra copia.');status('No se completó.')}
+  btn.disabled=false;setTimeout(()=>prog(null),1200);
+};
+
+/* ---------- guardar archivos ---------- */
+async function saveFile(bytes,name){
+  const ext=name.split('.').pop(),blob=new Blob([bytes],{type:ext==='zip'?'application/zip':'application/pdf'});
+  if(window.claude&&claude.use){
+    const d=await claude.use('downloads');
+    if(!d) return 'Esta vista no permite descargar archivos. Abre la página en el navegador.';
+    try{await d.save({filename:name,data:blob});return `Listo: ${name}.`}
+    catch(e){const c=e&&e.code;return c==='declined'?'Descarga cancelada.':c==='host_unavailable'?'Esta app no puede guardar archivos. Abre la página en el navegador o en la computadora.':c==='rate_limited'?'Espera un momento y vuelve a tocar el botón.':'No se pudo guardar el archivo.'}
+  }
+  const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=name;document.body.append(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(a.href),4000);return `Listo: ${name}.`;
+}
+function parseRanges(t,n){
+  const out=[];for(const part of t.split(/[,;]+/).map(s=>s.trim()).filter(Boolean)){
+    const m=part.match(/^(\d+)?\s*-\s*(\d+)?$/)||part.match(/^(\d+)$/);if(!m)throw new Error(`No entiendo «${part}».`);
+    let a,b;if(m.length===2){a=b=+m[1]}else{a=m[1]?+m[1]:1;b=m[2]?+m[2]:n}
+    if(a<1||b<1||a>n||b>n)throw new Error(`«${part}» está fuera del PDF (tiene ${n} hojas).`);
+    out.push([Math.min(a,b),Math.max(a,b)]);
+  }return out;
+}
+async function readPdf(f){const b=new Uint8Array(await f.arrayBuffer());const d=await PDFDocument.load(b,{ignoreEncryption:true});return {b,d,n:d.getPageCount()}}
+
+/* ---------- unir ---------- */
+let uFiles=[];
+function uRender(){const l=$('#uList');l.textContent='';uFiles.forEach((f,i)=>{const li=document.createElement('li'),s=document.createElement('span'),sm=document.createElement('small');s.textContent=f.name;sm.textContent=f.n+' hojas';
+  const up=document.createElement('button'),dn=document.createElement('button'),x=document.createElement('button');[up,dn,x].forEach(b=>b.className='ib');up.textContent='↑';dn.textContent='↓';x.textContent='×';up.ariaLabel='Subir';dn.ariaLabel='Bajar';x.ariaLabel='Quitar';
+  up.onclick=()=>{if(i){[uFiles[i-1],uFiles[i]]=[uFiles[i],uFiles[i-1]];uRender()}};dn.onclick=()=>{if(i<uFiles.length-1){[uFiles[i+1],uFiles[i]]=[uFiles[i],uFiles[i+1]];uRender()}};x.onclick=()=>{uFiles.splice(i,1);uRender()};
+  li.append(s,sm,up,dn,x);l.append(li)});$('#uGo').disabled=uFiles.length<2;$('#uSt').textContent=uFiles.length?`${uFiles.reduce((a,f)=>a+f.n,0)} hojas en total.`:''}
+$('#uIn').onchange=async e=>{for(const f of e.target.files){try{const r=await readPdf(f);uFiles.push({name:f.name,b:r.b,n:r.n})}catch(err){dialog('No se pudo abrir '+f.name,'El archivo parece dañado o tiene contraseña.')}}e.target.value='';uRender()};
+$('#uGo').onclick=async()=>{if(!permitido(uFiles.reduce((a,f)=>a+f.n,0))){pedirPro();return}const b=$('#uGo');b.disabled=true;$('#uSt').textContent='Uniendo…';try{const o=await PDFDocument.create();for(const f of uFiles){const d=await PDFDocument.load(f.b,{ignoreEncryption:true});for(const p of await o.copyPages(d,d.getPageIndices()))o.addPage(p)}$('#uSt').textContent=await saveFile(await o.save(),'unido.pdf')}catch(e){console.error(e);$('#uSt').textContent='No se pudo unir.'}b.disabled=false};
+
+/* ---------- extraer y dividir ---------- */
+let eF=null;
+$('#eIn').onchange=async e=>{const f=e.target.files[0];e.target.value='';if(!f)return;try{const r=await readPdf(f);eF={name:f.name.replace(/\.pdf$/i,''),...r};$('#eInfo').textContent=`${f.name} · ${r.n} hojas`;$('#eOne').disabled=$('#eSplit').disabled=false}catch(err){dialog('No se pudo abrir el PDF','El archivo parece dañado o tiene contraseña.')}};
+async function pick(rs){const o=await PDFDocument.create(),idx=[];for(const [a,b] of rs)for(let p=a;p<=b;p++)idx.push(p-1);for(const p of await o.copyPages(eF.d,idx))o.addPage(p);return o.save()}
+$('#eOne').onclick=async()=>{if(!permitido(eF.n)){pedirPro();return}try{const t=$('#eR').value.trim();if(!t){$('#eSt').textContent='Escribe qué hojas quieres extraer.';return}const rs=parseRanges(t,eF.n);$('#eSt').textContent='Extrayendo…';$('#eSt').textContent=await saveFile(await pick(rs),`${eF.name}_hojas.pdf`)}catch(e){$('#eSt').textContent=e.message}};
+$('#eSplit').onclick=async()=>{if(!permitido(eF.n)){pedirPro();return}try{const t=$('#eR').value.trim(),rs=t?parseRanges(t,eF.n):Array.from({length:eF.n},(_,i)=>[i+1,i+1]);if(!window.JSZip)throw new Error('No cargó la herramienta para crear el ZIP.');const z=new JSZip();
+  for(let k=0;k<rs.length;k++){$('#eSt').textContent=`Creando parte ${k+1} de ${rs.length}…`;const [a,b]=rs[k];z.file(`${eF.name}_${a===b?a:a+'-'+b}.pdf`,await pick([[a,b]]));await tick()}
+  $('#eSt').textContent=await saveFile(await z.generateAsync({type:'uint8array'}),`${eF.name}_dividido.zip`)}catch(e){$('#eSt').textContent=e.message}};
+
+/* ---------- girar ---------- */
+let gF=null,gA=90;
+$('#gIn').onchange=async e=>{const f=e.target.files[0];e.target.value='';if(!f)return;try{const r=await readPdf(f);gF={name:f.name.replace(/\.pdf$/i,''),...r};$('#gInfo').textContent=`${f.name} · ${r.n} hojas`;$('#gGo').disabled=false}catch(err){dialog('No se pudo abrir el PDF','El archivo parece dañado o tiene contraseña.')}};
+for(const b of $$('#gSeg button'))b.onclick=()=>{gA=+b.dataset.g;for(const x of $$('#gSeg button'))x.setAttribute('aria-pressed',x===b)};
+$('#gGo').onclick=async()=>{if(!permitido(gF.n)){pedirPro();return}try{const t=$('#gR').value.trim(),rs=t?parseRanges(t,gF.n):[[1,gF.n]],d=await PDFDocument.load(gF.b,{ignoreEncryption:true}),ps=d.getPages();
+  for(const [a,b] of rs)for(let p=a;p<=b;p++){const pg=ps[p-1];pg.setRotation(degrees((pg.getRotation().angle+gA)%360))}
+  $('#gSt').textContent=await saveFile(await d.save(),`${gF.name}_girado.pdf`)}catch(e){$('#gSt').textContent=e.message}};
+
+syncInputs();renderLib();renderEst();
+if(document.fonts){document.fonts.load('700 20px "Roboto Condensed"').catch(()=>{});document.fonts.ready.then(()=>{rcache.clear();refreshAll()})}
+window.__fol={cfg:()=>cfg,placeAll,pages:()=>pages,stamps:()=>stamps,use:()=>use,renderStamp};
+}
+</script>
+</body>
+</html>

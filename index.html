@@ -169,7 +169,9 @@ input[type=number],input[type=text],select{width:100%;min-height:44px;padding:8p
 .corners.sm{grid-template-columns:repeat(2,44px);gap:4px}.corners.sm button{height:34px}
 .corners.sm button::after{width:12px;height:5px}
 .zones{list-style:none;padding:0;margin:0;display:grid;gap:10px;font-size:14px}
-.zones li{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.zones li{display:grid;gap:6px;padding:10px;background:var(--soft);border-radius:8px}
+.zones .zone-setting{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.zones .hint{margin:0}
 .zk{width:14px;height:10px;border-radius:2px;display:inline-block;flex:none}
 .radios{display:grid;gap:10px}
 .radios label{display:flex;align-items:center;gap:8px;flex-wrap:wrap;font-size:15px}
@@ -312,11 +314,17 @@ input.inl{width:82px;min-height:40px}
         <p class="hint warn" id="hsErr" hidden></p>
         <div id="dinBox">
           <label class="f" style="margin-top:14px">Lugar preferido<select data-k="zona"><option value="br">Abajo a la derecha</option><option value="bl">Abajo a la izquierda</option><option value="tr">Arriba a la derecha</option><option value="tl">Arriba a la izquierda</option><option value="any">Donde haya más espacio</option></select></label>
-          <div class="lbl">Zonas que ningún sello toca</div>
+          <div class="lbl">Ubicación de los sellos automáticos</div>
           <ul class="zones">
-            <li><span class="zk" style="background:#64b5f6"></span>Folio, según su posición</li>
-            <li><label class="chk"><input type="checkbox" data-k="fr"> <span class="zk" style="background:#ffcc80"></span>Franja de archivo del borde izquierdo:</label><input type="number" class="inl" data-k="frMm" min="0" max="80" aria-label="Ancho de la franja en mm"> mm</li>
-            <li><span class="zk" style="background:#cfd8dc"></span>Margen de <input type="number" class="inl" data-k="bMm" min="0" max="40" aria-label="Margen al borde en mm"> mm al borde de la hoja</li>
+            <li>
+              <label class="chk"><input type="checkbox" data-k="fr"> Dejar libre el lado izquierdo para archivar</label>
+              <label class="zone-setting">Ancho de la franja <input type="number" class="inl" data-k="frMm" min="0" max="80" aria-label="Ancho de la franja en milímetros"> mm</label>
+              <p class="hint">Activa esta opción si vas a perforar o archivar el documento. Por ejemplo, 25 mm son 2,5 cm.</p>
+            </li>
+            <li>
+              <label class="zone-setting"><b>Distancia del sello al borde de la hoja</b> <input type="number" class="inl" data-k="bMm" min="0" max="40" aria-label="Distancia del sello al borde de la hoja en milímetros"> mm</label>
+              <p class="hint">Se mide desde el borde del papel. Por ejemplo, 5 mm son medio centímetro.</p>
+            </li>
           </ul>
           <p class="hint">En cada hoja se busca el espacio en blanco más cercano al lugar preferido, sin tapar texto, fotos, el folio ni los otros sellos. «Analizar» te marca las hojas que conviene revisar; si alguno no te convence, arrástralo.</p>
         </div>
@@ -406,6 +414,12 @@ input.inl{width:82px;min-height:40px}
           <label class="f">Tamaño del sello<select id="fSize"></select></label>
           <div class="row" id="fCustom"><label class="f">Ancho (mm)<input type="number" data-f="w" min="10" max="150" step="1"></label><label class="f">Alto (mm)<input type="number" data-f="h" min="6" max="150" step="1"></label></div>
           <div id="fFields" class="mform"></div>
+          <div class="fg" id="fSignatureSpace">
+            <label class="f">Espacio para firmar <output id="fSignatureValue" for="fSignatureRange"></output>
+              <input type="range" id="fSignatureRange" min="0" max="60" step="1" aria-label="Espacio para firmar dentro del sello">
+            </label>
+            <button type="button" class="btn sm" id="fSignatureReset">Usar espacio automático</button>
+          </div>
           <div class="fg"><span>Firma escaneada (opcional)</span>
             <div style="display:flex;gap:8px;flex-wrap:wrap"><span class="btn sm filebtn">Subir firma<input type="file" id="fFirma" accept="image/*"></span><button class="btn sm" id="fFirmaDel" hidden>Quitar firma</button></div>
             <p class="hint" style="margin:0">Foto o escaneo de tu firma en papel blanco: el fondo blanco se quita solo.</p></div>
@@ -442,7 +456,7 @@ const COLORS={negro:'#1a1a1a',azul:'#1d3c9b',rojo:'#c62828'};
 const FONTS={'Arial':'Arial, Helvetica, sans-serif','Arial Narrow':'"Arial Narrow", "Roboto Condensed", Arial, sans-serif','Times New Roman':'"Times New Roman", Times, serif','Courier New':'"Courier New", Courier, monospace','Verdana':'Verdana, Geneva, sans-serif','Georgia':'Georgia, serif'};
 const FIELDS=[['ent','Empresa / institución'],['nom','Nombre'],['car','Cargo o especialidad'],['cip','N.° de colegiatura / registro (opcional)']];
 const PRESET={firma:{w:60,h:32,ent:[8,1],nom:[10,1],car:[7.5,1],cip:[8,1],color:'negro'},rect:{w:40,h:15,ent:[7,1],nom:[6,0],car:[5,0],cip:[5,0],color:'azul'},round:{w:40,h:40,ent:[8,1],nom:[8,1],car:[7,1],cip:[7,0],color:'azul'}};
-const SIZES={firma:[[50,27],[60,32,'60 × 32 mm (recomendado)'],[70,37],[80,42]],rect:[[40,15,'40 × 15 mm (estándar)'],[50,20],[60,25],[60,30],[70,35],[80,40]],round:[[30,30,'Ø 30 mm'],[35,35,'Ø 35 mm'],[40,40,'Ø 40 mm (estándar)'],[45,45,'Ø 45 mm'],[50,50,'Ø 50 mm']]};
+const SIZES={firma:[[50,27],[60,32,'60 × 32 mm (recomendado)'],[70,37],[80,42]],rect:[[40,15,'40 × 15 mm (estándar)'],[50,20],[60,20],[60,25],[60,30],[70,25],[70,35],[80,30],[80,40]],round:[[30,30,'Ø 30 mm'],[35,35,'Ø 35 mm'],[40,40,'Ø 40 mm (estándar)'],[45,45,'Ø 45 mm'],[50,50,'Ø 50 mm']]};
 const libsOk=!!(window.PDFLib&&window.pdfjsLib);
 if(window.pdfjsLib) pdfjsLib.GlobalWorkerOptions.workerSrc='https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
 const {PDFDocument,StandardFonts,rgb,degrees}=window.PDFLib||{};
@@ -603,8 +617,10 @@ function renderStamp(s){
   if(rect){x.lineWidth=Math.max(1.5,.3*PXMM);x.strokeRect(x.lineWidth/2,x.lineWidth/2,W-x.lineWidth,H-x.lineWidth)}
   const order=rect?['nom','car','cip']:['nom','cip','car'],lh=f=>f.pt*PT*1.18;
   const sumT=(T.ent?lh(s.ent):0)+order.filter(k=>T[k]).reduce((a,k)=>a+lh(s[k]),0),gap=.7*PXMM,avail=H-2*pad;
-  const minZone=firma||!rect?avail*.34:1.4*PXMM;let sc=1;if(sumT+gap+minZone>avail)sc=Math.max(.3,(avail-gap-minZone)/Math.max(1,sumT));
-  const zone=Math.max(0,avail-gap-sumT*sc);let y=pad;
+  const customZone=Number.isFinite(s.signatureSpace)?avail*s.signatureSpace/100:null;
+  const minZone=customZone??(firma||!rect?avail*.34:1.4*PXMM);let sc=1;if(sumT+gap+minZone>avail)sc=Math.max(.3,(avail-gap-minZone)/Math.max(1,sumT));
+  const freeZone=Math.max(0,avail-gap-sumT*sc),zone=Math.min(freeZone,customZone??freeZone);
+  c.signaturePercent=Math.round(zone/avail*100);let y=pad;
   if(T.ent){const h=lh(s.ent)*sc,k=fit(s.ent,T.ent,maxW,sc);if(!rect&&LS)x.letterSpacing=(s.ent.pt*PT*k*.12)+'px';x.fillText(T.ent,W/2,y+h/2);if(LS)x.letterSpacing='0px';y+=h}
   y+=zone;const lineY=y+gap*.35;
   let nameW=0;if(T.nom){fit(s.nom,T.nom,maxW,sc);nameW=x.measureText(T.nom).width}
@@ -669,8 +685,18 @@ function syncEditor(){
 }
 function drawPreview(){
   if(!draft)return;draft.ver++;const c=renderStamp(draft),p=$('#fPrev');p.width=c.width;p.height=c.height;p.getContext('2d').drawImage(c,0,0);
+  const adjustable=draft.modo==='texto'&&draft.forma!=='round';
+  $('#fSignatureSpace').hidden=!adjustable;
+  if(adjustable){
+    const range=$('#fSignatureRange'),custom=Number.isFinite(draft.signatureSpace);
+    range.value=custom?draft.signatureSpace:Math.min(+range.max,c.signaturePercent);
+    $('#fSignatureValue').textContent=custom?range.value+' %':'Automático';
+    $('#fSignatureReset').hidden=!custom;
+  }
   $('#fReal').textContent=`Tamaño real: ${Math.round(draft.w*10)/10} × ${Math.round(draft.h*10)/10} mm`+(draft.modo==='imagen'&&!draft.img?' · sube una imagen':'');
 }
+$('#fSignatureRange').oninput=e=>{draft.signatureSpace=+e.target.value;drawPreview()};
+$('#fSignatureReset').onclick=()=>{delete draft.signatureSpace;drawPreview()};
 for(const el of $$('[data-f]'))el.addEventListener('input',()=>{
   const p=el.dataset.f;let v=el.type==='checkbox'?el.checked:el.value;
   if(el.type==='number'){v=parseFloat(v);if(!isFinite(v)||v<=0)return}

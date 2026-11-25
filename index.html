@@ -109,8 +109,9 @@ input[type=number],input[type=text],select{width:100%;min-height:44px;padding:8p
 .hub h2,.hub h3{margin:0 0 10px}
 .hub h3{scroll-margin-top:100px}
 .toolLinks{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,210px),1fr));gap:12px}
-.toolLinks button{text-align:left;display:grid;gap:5px;min-height:84px;color:var(--blue)}
-.toolLinks small{color:var(--mut);font-weight:400;white-space:normal}
+.toolLinks button{display:grid;justify-content:stretch;align-content:center;text-align:left;gap:4px;min-height:84px;color:var(--ink);font-size:1.0625rem;font-weight:700}
+.toolLinks button:hover{border-color:var(--acc)}
+.toolLinks small{color:var(--mut);font-size:.9375rem;font-weight:400;line-height:1.45;white-space:normal}
 .pagePicker{display:grid;grid-template-columns:repeat(auto-fill,minmax(100px,1fr));gap:8px;max-height:360px;overflow:auto;padding:3px}
 .pagePicker button{background:var(--soft);border:1px solid var(--line);border-radius:8px;min-width:0;min-height:130px;display:grid;justify-items:center;align-content:center;gap:6px;padding:5px}
 .pagePicker button[aria-pressed=true]{border-color:var(--blue);box-shadow:inset 0 0 0 1px var(--blue);color:var(--blue);font-weight:700}
@@ -185,6 +186,15 @@ input.inl{width:82px;min-height:40px}
 .ok{color:light-dark(#2e7d32,#81c784);font-weight:700}
 @media(max-width:760px){.mbody{grid-template-columns:minmax(0,1fr)}.mprev{order:-1;top:-16px;z-index:1;box-shadow:0 6px 14px #0002}.mprev .pap{min-height:110px;padding:10px}.mprev canvas{max-height:130px}}
 @media(max-width:600px){.top{gap:8px}.tabs button{padding:8px 10px;font-size:15px}.drop{min-height:320px}.drop h2{font-size:26px}.cw,.grid{max-height:62vh}.tool h2{font-size:26px}.modal{padding:0}.mbox{max-height:100vh;height:100%;border-radius:0}}
+@media(max-width:600px){
+  .top{justify-content:center;padding-inline:16px}
+  .tabs{justify-content:center;width:100%}
+  .hub{padding:24px 16px 32px;gap:22px}
+  .hub h2{font-size:1.5rem}
+  .hub h3{font-size:1.125rem}
+  .toolLinks{grid-template-columns:minmax(0,1fr);gap:10px}
+  .toolLinks button{min-height:76px;padding:12px 16px}
+}
 @media(prefers-reduced-motion:reduce){*{transition:none!important}}
 </style>
 </head>
@@ -537,7 +547,9 @@ for(const button of $$('[data-v]')) button.onclick=()=>{
     $('#gRange').hidden=rotateWhole;updateRotation();
   }
   const heading=button.dataset.section?document.getElementById(button.dataset.section):$('#v-'+view+' h2');
-  heading?.scrollIntoView({block:'start'});heading?.focus({preventScroll:true});
+  if(view==='inicio'&&!button.dataset.section)window.scrollTo(0,0);
+  else heading?.scrollIntoView({block:'start'});
+  heading?.focus({preventScroll:true});
 };
 
 /* ---------- controles del panel ---------- */

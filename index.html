@@ -507,8 +507,8 @@ const MM=72/25.4, PXMM=12, PT=PXMM*25.4/72;
 const COLORS={negro:'#1a1a1a',azul:'#1d3c9b',rojo:'#c62828'};
 const FONTS={'Arial':'Arial, Helvetica, sans-serif','Arial Narrow':'"Arial Narrow", "Roboto Condensed", Arial, sans-serif','Times New Roman':'"Times New Roman", Times, serif','Courier New':'"Courier New", Courier, monospace','Verdana':'Verdana, Geneva, sans-serif','Georgia':'Georgia, serif'};
 const FIELDS=[['ent','Empresa / institución'],['nom','Nombre'],['car','Cargo o especialidad'],['cip','N.° de colegiatura / registro (opcional)']];
-const PRESET={firma:{w:60,h:32,ent:[8,1],nom:[10,1],car:[7.5,1],cip:[8,1],color:'negro'},rect:{w:40,h:15,ent:[7,1],nom:[6,0],car:[5,0],cip:[5,0],color:'azul'},round:{w:40,h:40,ent:[8,1],nom:[8,1],car:[7,1],cip:[7,0],color:'azul'}};
-const SIZES={firma:[[50,27],[60,32,'60 × 32 mm (recomendado)'],[70,37],[80,42]],rect:[[40,15,'40 × 15 mm (estándar)'],[50,20],[60,20],[60,25],[60,30],[70,25],[70,35],[80,30],[80,40]],round:[[30,30,'Ø 30 mm'],[35,35,'Ø 35 mm'],[40,40,'Ø 40 mm (estándar)'],[45,45,'Ø 45 mm'],[50,50,'Ø 50 mm']]};
+const PRESET={firma:{w:55,h:22,ent:[8,1],nom:[9.5,1],car:[7.5,1],cip:[7.5,1],color:'negro'},rect:{w:40,h:15,ent:[7,1],nom:[6,0],car:[5,0],cip:[5,0],color:'azul'},round:{w:40,h:40,ent:[8,1],nom:[8,1],car:[7,1],cip:[7,0],color:'azul'}};
+const SIZES={firma:[[45,18,'45 × 18 mm (compacto)'],[50,20],[55,22,'55 × 22 mm (estándar, como sello real)'],[60,24],[70,28],[60,32,'60 × 32 mm (con más espacio para firmar)']],rect:[[40,15,'40 × 15 mm (estándar)'],[50,20],[60,20],[60,25],[60,30],[70,25],[70,35],[80,30],[80,40]],round:[[30,30,'Ø 30 mm'],[35,35,'Ø 35 mm'],[40,40,'Ø 40 mm (estándar)'],[45,45,'Ø 45 mm'],[50,50,'Ø 50 mm']]};
 const libsOk=!!(window.PDFLib&&window.pdfjsLib);
 if(window.pdfjsLib) pdfjsLib.GlobalWorkerOptions.workerSrc='https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
 const {PDFDocument,StandardFonts,rgb,degrees}=window.PDFLib||{};
@@ -529,6 +529,8 @@ let cfg={...DEF};
 try{Object.assign(cfg,JSON.parse(localStorage.getItem('na.cfg')||'{}'))}catch(e){}
 let stamps=[],use=[];
 try{const d=JSON.parse(localStorage.getItem('na.sellos')||'null');if(d){stamps=d.stamps||[];use=d.use||[]}}catch(e){}
+// Sellos «Firma» que quedaron con el tamaño antiguo de fábrica (60 × 32 mm) pasan al tamaño real (55 × 22 mm), una sola vez.
+try{if(!localStorage.getItem('na.sellos.m1')){for(const st of stamps)if(st.forma==='firma'&&st.modo!=='imagen'&&st.w===60&&st.h===32){st.w=55;st.h=22;st.ver=(st.ver||1)+1;if(st.est)st.est.mv=Math.max(0,st.est.mv)}localStorage.setItem('na.sellos.m1','1');if(stamps.length)localStorage.setItem('na.sellos',JSON.stringify({stamps,use}))}}catch(e){}
 if(!stamps.length&&!localStorage.getItem('na.sellos.v')){const s=newStamp('firma');s.ref='Ejemplo: supervisión';s.ent.t='SUPERVISIÓN DE OBRA';s.nom.t='NOMBRE APELLIDO APELLIDO';s.cip.t='00000';s.car.t='JEFE DE SUPERVISIÓN DE OBRA';stamps.push(s);use=[s.id]}
 
 let allFolios=true;
@@ -678,7 +680,7 @@ function renderStamp(s){
   }
   const rect=s.forma==='rect',pad=(rect?1.1:.4)*PXMM,maxW=W-2*pad-(rect?.4*PXMM:0);
   if(rect){x.lineWidth=Math.max(1.5,.3*PXMM);x.strokeRect(x.lineWidth/2,x.lineWidth/2,W-x.lineWidth,H-x.lineWidth)}
-  const order=rect?['nom','car','cip']:['nom','cip','car'],lh=f=>f.pt*PT*1.18;
+  const order=rect?['nom','car','cip']:['nom','cip','car'],lh=f=>f.pt*PT*(rect?1.18:1.08);
   const sumT=(T.ent?lh(s.ent):0)+order.filter(k=>T[k]).reduce((a,k)=>a+lh(s[k]),0),gap=.7*PXMM,avail=H-2*pad;
   const customZone=Number.isFinite(s.signatureSpace)?avail*s.signatureSpace/100:null;
   const minZone=customZone??(firma||!rect?avail*.34:1.4*PXMM);let sc=1;if(sumT+gap+minZone>avail)sc=Math.max(.3,(avail-gap-minZone)/Math.max(1,sumT));
@@ -688,7 +690,7 @@ function renderStamp(s){
   y+=zone;const lineY=y+gap*.35;
   let nameW=0;if(T.nom){fit(s.nom,T.nom,maxW,sc);nameW=x.measureText(T.nom).width}
   const lwid=Math.min(maxW,Math.max(nameW*1.05,W*(rect?.5:.6)));
-  x.save();x.lineWidth=Math.max(1,(rect?.18:.3)*PXMM);x.lineCap='round';x.setLineDash(rect?[.8*PXMM,.45*PXMM]:[.05*PXMM,.55*PXMM]);x.beginPath();x.moveTo(W/2-lwid/2,lineY);x.lineTo(W/2+lwid/2,lineY);x.stroke();x.restore();
+  x.save();x.lineWidth=Math.max(1,.22*PXMM);x.lineCap='butt';x.setLineDash([1.1*PXMM,.7*PXMM]);x.beginPath();x.moveTo(W/2-lwid/2,lineY);x.lineTo(W/2+lwid/2,lineY);x.stroke();x.restore();
   y+=gap;
   for(const k of order){if(!T[k])continue;const h=lh(s[k])*sc;fit(s[k],T[k],maxW,sc);x.fillText(T[k],W/2,y+h/2);y+=h}
   if(firma){const zh=zone+gap+lh(s.nom)*sc*.9,zw=maxW*.8,kk=Math.min(zw/firma.width,zh/firma.height),fw=firma.width*kk,fh=firma.height*kk;x.drawImage(firma,W/2-fw/2,lineY+lh(s.nom)*sc*.55-fh,fw,fh)}

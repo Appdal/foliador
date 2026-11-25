@@ -471,9 +471,16 @@ input.inl{width:82px;min-height:40px}
             </label>
             <button type="button" class="btn sm" id="fSignatureReset">Usar espacio automático</button>
           </div>
+          <div class="fg" id="fInkBox"><span>Grosor de la tinta</span>
+            <div class="seg" data-fs="ink"><button type="button" data-val="0">Normal</button><button type="button" data-val="1">Grueso</button><button type="button" data-val="2">Muy grueso</button></div>
+            <label class="chk"><input type="checkbox" id="fEntSp"> Letras espaciadas en la primera línea (empresa)</label>
+            <label class="f">Espacio entre líneas <output id="fLhValue"></output><input type="range" data-f="lh" min="80" max="130" step="1" aria-label="Espacio entre líneas del sello"></label>
+          </div>
           <div class="fg"><span>Firma escaneada (opcional)</span>
             <div style="display:flex;gap:8px;flex-wrap:wrap"><span class="btn sm filebtn">Subir firma<input type="file" id="fFirma" accept="image/*"></span><button class="btn sm" id="fFirmaDel" hidden>Quitar firma</button></div>
             <p class="hint" style="margin:0">Foto o escaneo de tu firma en papel blanco: el fondo blanco se quita solo.</p></div>
+          <div class="fg"><label class="f">Hojas donde va este sello (opcional)<input type="text" data-f="pages" placeholder="Vacío = todas. Ej.: 1-5, 8"></label>
+            <p class="hint" style="margin:0">Si lo dejas vacío, va en todas las hojas que se sellan.</p></div>
           <div><div class="lbl" style="margin-top:0">Color del sello</div>
             <div class="swatches" data-fs="color"><button data-val="negro" style="background:#1a1a1a" aria-label="Negro"></button><button data-val="azul" style="background:#1d3c9b" aria-label="Azul"></button><button data-val="rojo" style="background:#c62828" aria-label="Rojo"></button></div></div>
         </div>
@@ -534,7 +541,7 @@ try{if(!localStorage.getItem('na.sellos.m1')){for(const st of stamps)if(st.forma
 if(!stamps.length&&!localStorage.getItem('na.sellos.v')){const s=newStamp('firma');s.ref='Ejemplo: supervisión';s.ent.t='SUPERVISIÓN DE OBRA';s.nom.t='NOMBRE APELLIDO APELLIDO';s.cip.t='00000';s.car.t='JEFE DE SUPERVISIÓN DE OBRA';stamps.push(s);use=[s.id]}
 
 let allFolios=true;
-let src=null,fname='',doc=null,pages=[],cur=0,mode='one',zoom=1,fitWidth=false,activeStamp=null,inkMap=[],inkJobs=[],manual={},renderTask=null,kc=1,flagged=null;
+let src=null,fname='',doc=null,pages=[],cur=0,mode='one',zoom=1,fitWidth=false,activeStamp=null,inkMap=[],inkJobs=[],manual={},skip={},renderTask=null,kc=1,flagged=null;
 
 function newStamp(forma){const p=PRESET[forma],F=k=>({t:'',font:'Arial',pt:p[k][0],b:!!p[k][1]});
   return {id:'s'+Date.now().toString(36)+Math.random().toString(36).slice(2,6),ref:'',modo:'texto',forma,w:p.w,h:p.h,color:p.color,cipPre:'CIP N.°',bg:true,rotImg:0,firma:null,img:null,ent:F('ent'),nom:F('nom'),car:F('car'),cip:F('cip'),est:{cor:'br',mh:15,mv:25},ver:1}}
@@ -658,6 +665,7 @@ function renderStamp(s){
   const W=Math.max(1,Math.round(s.w*PXMM)),H=Math.max(1,Math.round(s.h*PXMM)),c=document.createElement('canvas');c.width=W;c.height=H;const x=c.getContext('2d');
   if(s.modo==='imagen'){const im=asset(s.img,s.bg,s.rotImg||0);if(im){const k=Math.min(W/im.width,H/im.height);x.drawImage(im,(W-im.width*k)/2,(H-im.height*k)/2,im.width*k,im.height*k)}return c}
   const col=COLORS[s.color]||COLORS.negro;x.fillStyle=x.strokeStyle=col;x.textAlign='center';x.textBaseline='middle';
+  const inkW=(+s.ink||0)*.09*PXMM;if(inkW){const ft=x.fillText.bind(x);x.fillText=(t,a,b)=>{ft(t,a,b);x.save();x.setLineDash([]);x.lineWidth=inkW;x.lineJoin='round';x.strokeText(t,a,b);x.restore()}}
   const T={ent:s.ent.t.trim(),nom:s.nom.t.trim(),car:s.car.t.trim(),cip:s.cip.t.trim()?(s.cipPre.trim()+' '+s.cip.t.trim()).trim():''};
   const firma=asset(s.firma,false);
   const setF=(f,k)=>{x.font=`${f.b?700:400} ${Math.max(3,f.pt*PT*k)}px ${FONTS[f.font]||FONTS.Arial}`};
@@ -679,18 +687,18 @@ function renderStamp(s){
     return c;
   }
   const rect=s.forma==='rect',pad=(rect?1.1:.4)*PXMM,maxW=W-2*pad-(rect?.4*PXMM:0);
-  if(rect){x.lineWidth=Math.max(1.5,.3*PXMM);x.strokeRect(x.lineWidth/2,x.lineWidth/2,W-x.lineWidth,H-x.lineWidth)}
-  const order=rect?['nom','car','cip']:['nom','cip','car'],lh=f=>f.pt*PT*(rect?1.18:1.08);
+  if(rect){x.lineWidth=Math.max(1.5,.3*PXMM+inkW);x.strokeRect(x.lineWidth/2,x.lineWidth/2,W-x.lineWidth,H-x.lineWidth)}
+  const order=rect?['nom','car','cip']:['nom','cip','car'],LHF=+s.lh>0?+s.lh/100:(rect?1.18:1.08),lh=f=>f.pt*PT*LHF;
   const sumT=(T.ent?lh(s.ent):0)+order.filter(k=>T[k]).reduce((a,k)=>a+lh(s[k]),0),gap=.7*PXMM,avail=H-2*pad;
   const customZone=Number.isFinite(s.signatureSpace)?avail*s.signatureSpace/100:null;
   const minZone=customZone??(firma||!rect?avail*.34:1.4*PXMM);let sc=1;if(sumT+gap+minZone>avail)sc=Math.max(.3,(avail-gap-minZone)/Math.max(1,sumT));
   const freeZone=Math.max(0,avail-gap-sumT*sc),zone=Math.min(freeZone,customZone??freeZone);
   c.signaturePercent=Math.round(zone/avail*100);let y=pad;
-  if(T.ent){const h=lh(s.ent)*sc,k=fit(s.ent,T.ent,maxW,sc);if(!rect&&LS)x.letterSpacing=(s.ent.pt*PT*k*.12)+'px';x.fillText(T.ent,W/2,y+h/2);if(LS)x.letterSpacing='0px';y+=h}
+  if(T.ent){const h=lh(s.ent)*sc,sp=!rect&&LS&&s.entSp!==false;if(sp)x.letterSpacing=(s.ent.pt*PT*sc*.12)+'px';const k=fit(s.ent,T.ent,maxW,sc);if(sp){x.letterSpacing=(s.ent.pt*PT*k*.12)+'px';fit(s.ent,T.ent,maxW,k)}x.fillText(T.ent,W/2,y+h/2);if(LS)x.letterSpacing='0px';y+=h}
   y+=zone;const lineY=y+gap*.35;
   let nameW=0;if(T.nom){fit(s.nom,T.nom,maxW,sc);nameW=x.measureText(T.nom).width}
   const lwid=Math.min(maxW,Math.max(nameW*1.05,W*(rect?.5:.6)));
-  x.save();x.lineWidth=Math.max(1,.22*PXMM);x.lineCap='butt';x.setLineDash([1.1*PXMM,.7*PXMM]);x.beginPath();x.moveTo(W/2-lwid/2,lineY);x.lineTo(W/2+lwid/2,lineY);x.stroke();x.restore();
+  x.save();x.lineWidth=Math.max(1,.22*PXMM+inkW);x.lineCap='butt';x.setLineDash([1.1*PXMM,.7*PXMM]);x.beginPath();x.moveTo(W/2-lwid/2,lineY);x.lineTo(W/2+lwid/2,lineY);x.stroke();x.restore();
   y+=gap;
   for(const k of order){if(!T[k])continue;const h=lh(s[k])*sc;fit(s[k],T[k],maxW,sc);x.fillText(T[k],W/2,y+h/2);y+=h}
   if(firma){const zh=zone+gap+lh(s.nom)*sc*.9,zw=maxW*.8,kk=Math.min(zw/firma.width,zh/firma.height),fw=firma.width*kk,fh=firma.height*kk;x.drawImage(firma,W/2-fw/2,lineY+lh(s.nom)*sc*.55-fh,fw,fh)}
@@ -707,7 +715,7 @@ function renderLib(){
     const li=document.createElement('li'),on=use.includes(s.id);li.className=on?'on':'';
     const pv=document.createElement('div');pv.className='pv';const cv=document.createElement('canvas'),sc=stampCanvas(s);cv.width=sc.width;cv.height=sc.height;cv.getContext('2d').drawImage(sc,0,0);pv.append(cv);
     const bar=document.createElement('div');bar.className='bar';const lab=document.createElement('label'),ck=document.createElement('input'),nm=document.createElement('span');
-    ck.type='checkbox';ck.checked=on;nm.textContent=s.ref||'Sin nombre';lab.append(ck,nm);
+    ck.type='checkbox';ck.checked=on;nm.textContent=s.ref||'Sin nombre';lab.append(ck,nm);if((s.pages||'').trim()){const hp=document.createElement('small');hp.className='hint';hp.style.cssText='display:block;margin:0;font-weight:400';hp.textContent='Hojas: '+s.pages.trim();nm.append(hp)}
     ck.onchange=()=>{use=ck.checked?[...use,s.id]:use.filter(i=>i!==s.id);saveStamps();flagged=null;showReview();refreshAll()};
     bar.append(lab);
     if(on){const o=document.createElement('span');o.className='ord';o.textContent=use.indexOf(s.id)+1;o.title='Orden';bar.append(o)}
@@ -738,6 +746,7 @@ const getP=(o,p)=>p.split('.').reduce((a,k)=>a[k],o);
 const setP=(o,p,v)=>{const ks=p.split('.'),l=ks.pop();ks.reduce((a,k)=>a[k],o)[l]=v};
 function openEditor(s){
   editing=s||null;draft=s?JSON.parse(JSON.stringify(s)):newStamp('firma');draft.id=s?s.id:draft.id;draft.ver=(s?s.ver:0)+1000;
+  if(draft.ink===undefined)draft.ink='0';draft.ink=String(draft.ink);if(!(+draft.lh>0))draft.lh=draft.forma==='rect'?118:108;if(draft.pages===undefined)draft.pages='';
   $('#smT').textContent=s?'Editar sello':'Nuevo sello';$('#sm').hidden=false;syncEditor();drawPreview();setTimeout(()=>$('[data-f=ref]').focus(),30);
 }
 function closeEditor(){$('#sm').hidden=true;draft=null}
@@ -759,8 +768,10 @@ function drawPreview(){
     $('#fSignatureValue').textContent=custom?range.value+' %':'Automático';
     $('#fSignatureReset').hidden=!custom;
   }
+  $('#fLhValue').textContent=(+draft.lh||108)+' %';$('#fEntSp').checked=draft.entSp!==false;$('#fEntSp').parentElement.hidden=draft.forma!=='firma';$('#fInkBox').hidden=draft.modo!=='texto';
   $('#fReal').textContent=`Tamaño real: ${Math.round(draft.w*10)/10} × ${Math.round(draft.h*10)/10} mm`+(draft.modo==='imagen'&&!draft.img?' · sube una imagen':'')+(draft.modo==='imagen'?' · la línea punteada marca el área del sello':'');
 }
+$('#fEntSp').onchange=e=>{draft.entSp=e.target.checked;drawPreview()};
 $('#fSignatureRange').oninput=e=>{draft.signatureSpace=+e.target.value;drawPreview()};
 $('#fSignatureReset').onclick=()=>{delete draft.signatureSpace;drawPreview()};
 for(const el of $$('[data-f]'))el.addEventListener('input',()=>{
@@ -813,6 +824,9 @@ function sealSet(){
   else if(cfg.hs==='esp'){try{const set=new Set();for(const [a,b] of parseRanges(cfg.sE||'',n||1e9))for(let p=a;p<=b;p++)set.add(p);v={set};if(!set.size)v.err='Escribe qué hojas quieres sellar.'}catch(e){v={set:new Set(),err:e.message}}}
   sealCache={k,v};return v;
 }
+const spCache=new Map();
+function stampOnPage(st,i){const t=(st.pages||'').trim();if(!t)return true;const k=t+'|'+pages.length;let set=spCache.get(k);if(set===undefined){try{set=rangePages(parseRanges(t,pages.length))}catch(e){set=null}spCache.set(k,set)}return !set||set.has(i+1)}
+function stampsFor(i){return usedStamps().filter(st=>stampOnPage(st,i)&&!(skip[i]&&skip[i].has(st.id)))}
 function sealPage(i){if(!sealing()||!usedStamps().length)return false;const v=sealSet();if(v.all)return true;if(v.set)return v.set.has(i+1);return i+1>=v.lo&&i+1<=v.hi}
 
 /* ---------- búsqueda de espacio libre ---------- */
@@ -826,7 +840,7 @@ function ensureInk(i){
 }
 const pcache=new Map();
 function placeAll(i){
-  if(!sealPage(i))return [];const L=usedStamps(),P=pages[i],Wm=P.w/MM,Hm=P.h/MM,cl=(v,a,b)=>Math.max(a,Math.min(b,v));
+  if(!sealPage(i))return [];const L=stampsFor(i),P=pages[i],Wm=P.w/MM,Hm=P.h/MM,cl=(v,a,b)=>Math.max(a,Math.min(b,v));
   if(cfg.sm==='est')return L.map(s=>{const e=s.est,x=e.cor[1]==='r'?Wm-e.mh-s.w:e.mh,y=e.cor[0]==='b'?Hm-e.mv-s.h:e.mv;return {s,x:cl(x,0,Math.max(0,Wm-s.w)),y:cl(y,0,Math.max(0,Hm-s.h)),f:0,est:true}});
   const bm=inkMap[i];if(!bm)return null;
   const fb=folioBox(i),key=[i,cfg.zona,cfg.fr,cfg.frMm,cfg.bMm,fb&&fb.bb.map(v=>v|0).join(),L.map(s=>s.id+s.w+'x'+s.h).join(),JSON.stringify(manual[i]||{})].join('|');
@@ -902,7 +916,7 @@ async function loadFile(f){
 async function openBytes(bytes,name){
   if(doc){try{doc.destroy()}catch(e){}}
   doc=await pdfjsLib.getDocument({data:bytes.slice(),isEvalSupported:false}).promise;
-  src=bytes;fname=name;pages=[];inkMap=[];inkJobs=[];manual={};pcache.clear();flagged=null;cur=0;activeStamp=null;
+  src=bytes;fname=name;pages=[];inkMap=[];inkJobs=[];manual={};skip={};pcache.clear();flagged=null;cur=0;activeStamp=null;
   for(let i=0;i<doc.numPages;i++){const p=await doc.getPage(i+1),v=p.getViewport({scale:1});pages.push({w:v.width,h:v.height})}
   allFolios=true;cfg.a=1;cfg.b=pages.length;cfg.sD=1;cfg.sH=pages.length;syncInputs();
   $('#drop').hidden=true;$('#viewer').hidden=false;$('#apply').disabled=$('#analyze').disabled=false;$('#fname').textContent=name;
@@ -934,7 +948,7 @@ $('#fitWidth').onclick=()=>{
   fitWidth=!fitWidth;zoom=1;$('#fitWidth').setAttribute('aria-pressed',fitWidth);renderPage();
 };
 $('#zi').onclick=()=>{zoom=Math.min(3,zoom*1.25);renderPage()};$('#zo').onclick=()=>{zoom=Math.max(.5,zoom/1.25);renderPage()};
-document.addEventListener('keydown',e=>{if(mode!=='one'||!pages.length||!$('#sm').hidden||/INPUT|SELECT|TEXTAREA/.test(document.activeElement.tagName))return;if(e.key==='ArrowRight')go(cur+1);if(e.key==='ArrowLeft')go(cur-1)});
+document.addEventListener('keydown',e=>{if(mode!=='one'||!pages.length||!$('#sm').hidden||!$('#dlg').hidden||/INPUT|SELECT|TEXTAREA/.test(document.activeElement.tagName))return;if((e.key==='Delete'||e.key==='Backspace')&&activeStamp){e.preventDefault();removeActive();return}if(e.key==='ArrowRight')go(cur+1);if(e.key==='ArrowLeft')go(cur-1)});
 async function renderPage(){
   if(!doc||mode!=='one')return;const i=cur,P=pages[i],cwE=$('#cw'),dpr=window.devicePixelRatio||1,fitH=Math.max(260,innerHeight*(innerWidth<=600?.62:.78)-34);
   const widthScale=Math.max(1,cwE.clientWidth-32)/P.w;
@@ -970,7 +984,7 @@ function note(){
   const placements=placeAll(i),pl=placements||[],sp=document.createElement('span');
   if(placements===null){sp.textContent='Buscando espacio para los sellos…';n.append(sp);return}
   if(pl.length){
-    const count=document.createElement('b');count.textContent=`${pl.length} de ${usedStamps().length} sellos colocados`;n.append(count);
+    const count=document.createElement('b');count.textContent=`${pl.length} de ${usedStamps().filter(st=>stampOnPage(st,i)).length} sellos colocados`;n.append(count);
     const links=document.createElement('div');links.className='stamp-links';
     for(const [index,p] of pl.entries()){
       const button=document.createElement('button');button.className='btn sm';
@@ -994,12 +1008,15 @@ function note(){
   else if(pl.some((a,j)=>pl.some((b,q)=>q>j&&a.x<b.x+b.s.w&&b.x<a.x+a.s.w&&a.y<b.y+b.s.h&&b.y<a.y+a.s.h))){sp.className='warn';sp.textContent='Dos sellos se superponen: cambia su posición o arrastra uno.'}
   else sp.textContent=cfg.sm==='est'?'Arrastra un sello para cambiar su posición en todas las hojas.':'Arrastra un sello para moverlo solo en esta hoja.';
   if(pl.length||sealing())n.append(sp);
+  if(activeStamp&&pl.some(p=>p.s.id===activeStamp)){const d=document.createElement('button');d.className='btn sm';d.textContent='Quitar sello de esta hoja (Supr)';d.onclick=()=>removeActive();n.append(d)}
+  if(skip[i]&&skip[i].size){const u=document.createElement('button');u.className='btn sm';u.textContent=`Restaurar sellos quitados (${skip[i].size})`;u.onclick=()=>{delete skip[i];pcache.clear();flagged=null;showReview();redraw()};n.append(u)}
   if(pl.some(p=>p.man)){const r=document.createElement('button');r.className='btn sm';r.textContent='Volver a automático';r.onclick=()=>{delete manual[i];redraw()};n.append(r)}
 }
 let drag=null;const oc=$('#oc');
 const ptr=e=>{const r=oc.getBoundingClientRect();return [(e.clientX-r.left)/kc/MM,(e.clientY-r.top)/kc/MM]};
 function hit(px,py){const pl=placeAll(cur)||[];for(let j=pl.length-1;j>=0;j--){const p=pl[j];if(px>=p.x&&px<=p.x+p.s.w&&py>=p.y&&py<=p.y+p.s.h)return p}return null}
-oc.addEventListener('pointerdown',e=>{const [px,py]=ptr(e),p=hit(px,py);if(!p)return;drag={p,dx:px-p.x,dy:py-p.y};oc.setPointerCapture(e.pointerId);e.preventDefault()});
+function removeActive(){if(!activeStamp||mode!=='one')return;(skip[cur]=skip[cur]||new Set()).add(activeStamp);if(manual[cur])delete manual[cur][activeStamp];activeStamp=null;pcache.clear();flagged=flagged&&flagged.filter(i=>i!==cur);showReview();redraw()}
+oc.addEventListener('pointerdown',e=>{const [px,py]=ptr(e),p=hit(px,py);if(!p){if(activeStamp){activeStamp=null;redraw()}return}activeStamp=p.s.id;if(document.activeElement&&document.activeElement!==document.body)document.activeElement.blur();drag={p,dx:px-p.x,dy:py-p.y};oc.setPointerCapture(e.pointerId);e.preventDefault()});
 oc.addEventListener('pointermove',e=>{const [px,py]=ptr(e);if(!drag){oc.style.cursor=hit(px,py)?'grab':'default';return}
   const P=pages[cur],s=drag.p.s,Wm=P.w/MM,Hm=P.h/MM,x=Math.max(0,Math.min(Wm-s.w,px-drag.dx)),y=Math.max(0,Math.min(Hm-s.h,py-drag.dy));
   if(cfg.sm==='est'){const e2=s.est;e2.mh=Math.round((e2.cor[1]==='r'?Wm-x-s.w:x)*2)/2;e2.mv=Math.round((e2.cor[0]==='b'?Hm-y-s.h:y)*2)/2}
